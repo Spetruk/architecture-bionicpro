@@ -3,9 +3,9 @@
  * Handles the redirect from Keycloak after user authentication
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createBionicProAuthService } from '../auth/AuthService';
+import { createBFFAuthService } from '../auth/BFFAuthService';
 
 interface AuthCallbackProps {
   onSuccess?: (tokens: any) => void;
@@ -15,10 +15,15 @@ interface AuthCallbackProps {
 export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess, onError }) => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const processedRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Prevent double execution in React.StrictMode
+    if (processedRef.current) return;
+    
     const handleCallback = async () => {
+      processedRef.current = true;
       try {
         // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -42,17 +47,19 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess, onError }
           throw new Error('State parameter not received');
         }
 
-        // Initialize auth service and handle callback
-        const authService = createBionicProAuthService();
-        const tokens = await authService.handleCallback(code, state);
+        // Initialize BFF auth service and handle callback
+        const authService = createBFFAuthService();
+        const authResponse = await authService.handleCallback(code, state);
 
-        // Store tokens securely (you might want to use a more secure method)
-        localStorage.setItem('access_token', tokens.access_token);
-        localStorage.setItem('refresh_token', tokens.refresh_token);
-        localStorage.setItem('id_token', tokens.id_token);
+        if (!authResponse.success) {
+          throw new Error(authResponse.message || 'Authentication failed');
+        }
 
         setStatus('success');
-        onSuccess?.(tokens);
+        onSuccess?.(authResponse);
+
+        // Clear URL parameters to prevent reuse
+        window.history.replaceState({}, document.title, window.location.pathname);
 
         // Redirect to main app after short delay using React Router
         setTimeout(() => {

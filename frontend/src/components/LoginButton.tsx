@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { createBionicProAuthService } from '../auth/AuthService';
+import { createBFFAuthService } from '../auth/BFFAuthService';
 
 interface LoginButtonProps {
   className?: string;
@@ -26,7 +26,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({
     onLoginStart?.();
 
     try {
-      const authService = createBionicProAuthService();
+      const authService = createBFFAuthService();
       await authService.initiateLogin();
     } catch (error) {
       const authError = error instanceof Error ? error : new Error('Login failed');

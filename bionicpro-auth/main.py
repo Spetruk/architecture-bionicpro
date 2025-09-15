@@ -1,0 +1,346 @@
+"""
+BionicPRO Auth Service - Backend for Frontend (BFF)
+Secure token management with session-based authentication
+"""
+import logging
+from datetime import datetime
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, Cookie, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from typing import Optional
+import secrets
+
+from config import settings
+from models import AuthResponse, UserInfo
+from services.keycloak_service import KeycloakService
+from services.session_service import SessionService
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="BionicPRO Auth Service",
+    description="Backend for Frontend (BFF) service for secure authentication",
+    version="1.0.0"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+# Initialize services
+keycloak_service = KeycloakService()
+session_service = SessionService()
+
+
+async def get_current_session(
+    request: Request,
+    bionicpro_session: Optional[str] = Cookie(None)
+) -> Optional[str]:
+    """
+    Get current session ID from cookie
+    """
+    if not bionicpro_session:
+        return None
+    
+    # Validate session
+    if not await session_service.is_session_valid(bionicpro_session):
+        return None
+        
+    return bionicpro_session
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/auth/login")
+async def login(response: Response):
+    """
+    Initiate OAuth 2.0 login flow with PKCE
+    """
+    try:
+        # Generate PKCE parameters
+        code_verifier = secrets.token_urlsafe(64)
+        code_challenge = await keycloak_service.generate_code_challenge(code_verifier)
+        state = secrets.token_urlsafe(32)
+
+        # Store PKCE verifier and state in Redis with short expiry
+        await session_service.redis_client.setex(f"pkce_verifier:{state}", 300, code_verifier)
+        await session_service.redis_client.setex(f"oauth_state:{state}", 300, "true")
+
+        # Build Keycloak authorization URL
+        auth_url = await keycloak_service.initiate_login(code_challenge, state)
+        
+        # Redirect to Keycloak
+        return RedirectResponse(auth_url, status_code=status.HTTP_302_FOUND)
+        
+    except Exception as e:
+        logger.error(f"Login initiation failed: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Login initiation failed")
+
+
+@app.get("/auth/callback")
+async def auth_callback(code: str, state: str, response: Response):
+    """
+    Handle OAuth callback and create session
+    """
+    try:
+        # Check if this request is already being processed (prevent double execution)
+        request_key = f"processing:{code}:{state}"
+        is_processing = await session_service.redis_client.get(request_key)
+        if is_processing:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Request already being processed")
+        
+        # Mark request as being processed
+        await session_service.redis_client.setex(request_key, 30, "processing")
+        
+        try:
+            # Validate state parameter
+            stored_state = await session_service.redis_client.get(f"oauth_state:{state}")
+            if not stored_state:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state parameter")
+            
+            # Delete state immediately to prevent reuse
+            await session_service.redis_client.delete(f"oauth_state:{state}")
+
+            # Retrieve code verifier
+            code_verifier = await session_service.redis_client.get(f"pkce_verifier:{state}")
+            if not code_verifier:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Code verifier not found or expired")
+            
+            # Delete code verifier immediately to prevent reuse
+            await session_service.redis_client.delete(f"pkce_verifier:{state}")
+
+            # Exchange code for tokens using PKCE
+            redirect_uri = f"{settings.cors_origins[0]}/auth/callback"
+            tokens = await keycloak_service.exchange_code_for_tokens(
+                code=code,
+                redirect_uri=redirect_uri,
+                code_verifier=code_verifier.decode('utf-8')
+            )
+            
+            # Extract user information
+            user_info = keycloak_service.extract_user_info(
+                id_token=tokens.id_token,
+                access_token=tokens.access_token
+            )
+            
+            # Create session
+            session_id = await session_service.create_session(
+                user_info=user_info,
+                access_token=tokens.access_token,
+                refresh_token=tokens.refresh_token,
+                id_token=tokens.id_token,
+                expires_in=tokens.expires_in
+            )
+            
+            # Set HTTP-only secure cookie
+            response.set_cookie(
+                key=settings.session_cookie_name,
+                value=session_id,
+                max_age=settings.session_max_age,
+                httponly=True,
+                secure=not settings.debug,  # Only secure in production
+                samesite="lax"
+            )
+            
+            return AuthResponse(
+                success=True,
+                user_info=user_info,
+                session_id=session_id,
+                message="Authentication successful"
+            )
+        finally:
+            # Clean up processing lock
+            await session_service.redis_client.delete(request_key)
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error(f"Auth callback failed: {e}")
+        raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
+
+
+@app.get("/auth/user")
+async def get_user_info(session_id: Optional[str] = Depends(get_current_session)):
+    """
+    Get current user information
+    """
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session_data = await session_service.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check if access token is expired and refresh if needed
+    if keycloak_service.is_token_expired(session_data.access_token):
+        try:
+            # Refresh tokens
+            new_tokens = await keycloak_service.refresh_access_token(session_data.refresh_token)
+            
+            # Update session with new tokens
+            await session_service.update_session_tokens(
+                session_id=session_id,
+                access_token=new_tokens.access_token,
+                refresh_token=new_tokens.refresh_token,
+                id_token=new_tokens.id_token,
+                expires_in=new_tokens.expires_in
+            )
+            
+            
+        except Exception as e:
+            logger.error(f"Token refresh failed: {e}")
+            await session_service.delete_session(session_id)
+            raise HTTPException(status_code=401, detail="Session expired")
+    
+    # Update last used timestamp
+    await session_service.update_last_used(session_id)
+    
+    return UserInfo(
+        sub=session_data.user_id,
+        username=session_data.username,
+        email=session_data.email,
+        roles=session_data.roles
+    )
+
+
+@app.post("/auth/logout")
+async def logout(
+    response: Response,
+    session_id: Optional[str] = Depends(get_current_session)
+):
+    """
+    Logout user and destroy session
+    """
+    if session_id:
+        session_data = await session_service.get_session(session_id)
+        if session_data:
+            # Revoke refresh token in Keycloak
+            try:
+                await keycloak_service.revoke_token(session_data.refresh_token)
+            except Exception as e:
+                logger.warning(f"Failed to revoke token: {e}")
+            
+            # Delete session
+            await session_service.delete_session(session_id)
+        
+        # Clear cookie
+        response.delete_cookie(
+            key=settings.session_cookie_name,
+            httponly=True,
+            secure=not settings.debug,  # Only secure in production
+            samesite="lax"
+        )
+    
+    return {"success": True, "message": "Logged out successfully"}
+
+
+@app.get("/api/protected")
+async def protected_endpoint(
+    response: Response,
+    session_id: Optional[str] = Depends(get_current_session)
+):
+    """
+    Protected endpoint that demonstrates session rotation
+    """
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session_data = await session_service.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check if access token is expired and refresh if needed
+    if keycloak_service.is_token_expired(session_data.access_token):
+        try:
+            new_tokens = await keycloak_service.refresh_access_token(session_data.refresh_token)
+            await session_service.update_session_tokens(
+                session_id=session_id,
+                access_token=new_tokens.access_token,
+                refresh_token=new_tokens.refresh_token,
+                id_token=new_tokens.id_token,
+                expires_in=new_tokens.expires_in
+            )
+        except Exception as e:
+            logger.error(f"Token refresh failed: {e}")
+            await session_service.delete_session(session_id)
+            raise HTTPException(status_code=401, detail="Session expired")
+    
+    # Rotate session ID for security (prevent session fixation)
+    new_session_id = await session_service.rotate_session(session_id)
+    if new_session_id:
+        # Update cookie with new session ID
+        response.set_cookie(
+            key=settings.session_cookie_name,
+            value=new_session_id,
+            max_age=settings.session_max_age,
+            httponly=True,
+            secure=not settings.debug,  # Only secure in production
+            samesite="lax"
+        )
+        session_id = new_session_id
+    
+    return {
+        "message": "Access granted to protected resource",
+        "user": session_data.username,
+        "roles": session_data.roles,
+        "session_id": session_id,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.get("/api/reports")
+async def get_reports(session_id: Optional[str] = Depends(get_current_session)):
+    """
+    Get user reports (role-based access)
+    """
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session_data = await session_service.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check user roles
+    if "prosthetic-pilot" in session_data.roles:
+        return {
+            "reports": [
+                {"id": 1, "type": "telemetry", "title": "Данные телеметрии протеза"},
+                {"id": 2, "type": "biosignals", "title": "Миосигналы и движения"},
+                {"id": 3, "type": "usage", "title": "Статистика использования"}
+            ],
+            "user_type": "pilot"
+        }
+    elif "prosthetic-buyer" in session_data.roles:
+        return {
+            "reports": [
+                {"id": 1, "type": "orders", "title": "История заказов"},
+                {"id": 2, "type": "delivery", "title": "Статусы доставки"},
+                {"id": 3, "type": "warranty", "title": "Гарантийные отчеты"}
+            ],
+            "user_type": "buyer"
+        }
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host=settings.app_host,
+        port=settings.app_port,
+        reload=settings.debug
+    )

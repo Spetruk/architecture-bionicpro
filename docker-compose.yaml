@@ -44,6 +44,7 @@ services:
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
       
       # Development mode
       KC_HEALTH_ENABLED: true
@@ -55,10 +56,12 @@ services:
       
       # PKCE and OAuth settings
       KC_FEATURES: token-exchange,admin-fine-grained-authz
+      
     
     command: 
       - start-dev
       - --import-realm
+      - --override=true
     
     volumes:
       - ./keycloak/realm-export-auto.json:/opt/keycloak/data/import/realm-export-auto.json
@@ -85,6 +88,7 @@ services:
       - REACT_APP_KEYCLOAK_CLIENT_ID=bionicpro-web-shop
       - REACT_APP_CLIENT_ID=bionicpro-web-shop
       - REACT_APP_REDIRECT_URI=http://localhost:3000/auth/callback
+      - REACT_APP_BFF_URL=http://localhost:8001
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     
@@ -137,12 +141,55 @@ services:
         node server.js
       "
 
+  # Redis for session storage
+  redis:
+    image: redis:7-alpine
+    container_name: bionicpro-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # BionicPRO Auth Service (BFF)
+  bionicpro-auth:
+    build:
+      context: ./bionicpro-auth
+      dockerfile: Dockerfile
+    container_name: bionicpro-auth
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=bionicpro
+      - KEYCLOAK_CLIENT_ID=bionicpro-web-shop
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8001:8000"
+    depends_on:
+      - keycloak
+      - redis
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres-data:
     driver: local
   keycloak-data:
     driver: local
   frontend-node-modules:
+    driver: local
+  redis-data:
     driver: local
 
 networks:

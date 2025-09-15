@@ -1,9 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { PKCETest } from './components/PKCETest';
 import { AuthCallback } from './components/AuthCallback';
-import { Dashboard } from './components/Dashboard';
-import { AuthGuard } from './components/AuthGuard';
+import { BFFDashboard } from './components/BFFDashboard';
+import { BFFAuthGuard } from './components/BFFAuthGuard';
 import { LoginButton } from './components/LoginButton';
 import ReportPage from './components/ReportPage';
 
@@ -89,14 +88,7 @@ function HomePage() {
         </div>
 
         {/* Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a 
-            href="/test" 
-            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            🧪 PKCE Test Dashboard
-          </a>
-          
+        <div className="text-center">
           <a 
             href="/reports" 
             className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -115,20 +107,15 @@ const App: React.FC = () => {
       <div className="App">
         <Routes>
           <Route path="/" element={
-            <AuthGuard fallback={<HomePage />}>
-              <Dashboard />
-            </AuthGuard>
+            <BFFAuthGuard fallback={<HomePage />}>
+              <BFFDashboard />
+            </BFFAuthGuard>
           } />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/test" element={
-            <AuthGuard fallback={<HomePage />}>
-              <PKCETest />
-            </AuthGuard>
-          } />
           <Route path="/reports" element={
-            <AuthGuard fallback={<HomePage />}>
+            <BFFAuthGuard fallback={<HomePage />}>
               <ReportPage />
-            </AuthGuard>
+            </BFFAuthGuard>
           } />
         </Routes>
       </div>
