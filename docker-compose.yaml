@@ -1,42 +1,150 @@
-version: '3.8'
-
 services:
-  keycloak_db:
-    image: postgres:14
+  # PostgreSQL database for Keycloak
+  postgres:
+    image: postgres:15-alpine
+    container_name: bionicpro-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: keycloak_db
-      POSTGRES_USER: keycloak_user
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak_password
+      POSTGRES_ROOT_PASSWORD: root_password
+    
     volumes:
-      - ./postgres-keycloak-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    
     ports:
-      - "5433:5432"
+      - "5432:5432"
+    
+    networks:
+      - bionicpro-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: bionicpro-keycloak
     environment:
+      # Admin credentials
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      
+      # PostgreSQL database configuration
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak_db:5432/keycloak_db
-      KC_DB_USERNAME: keycloak_user
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: keycloak_password
+      
+      # Hostname configuration
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      
+      # Development mode
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      
+      # Logging
+      KC_LOG_LEVEL: INFO
+      KC_LOG_CONSOLE_FORMAT: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"
+      
+      # PKCE and OAuth settings
+      KC_FEATURES: token-exchange,admin-fine-grained-authz
+    
     command: 
       - start-dev
       - --import-realm
+    
     volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./keycloak/realm-export-auto.json:/opt/keycloak/data/import/realm-export-auto.json
+      - keycloak-data:/opt/keycloak/data
+    
     ports:
       - "8080:8080"
-    depends_on:
-      - keycloak_db
+    
+    networks:
+      - bionicpro-network
+    
+    # Убираем healthcheck для быстрого запуска
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: bionicpro-frontend
+    environment:
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - REACT_APP_KEYCLOAK_REALM=bionicpro
+      - REACT_APP_KEYCLOAK_CLIENT_ID=bionicpro-web-shop
+      - REACT_APP_CLIENT_ID=bionicpro-web-shop
+      - REACT_APP_REDIRECT_URI=http://localhost:3000/auth/callback
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    
     ports:
       - "3000:3000"
+    
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    
+    networks:
+      - bionicpro-network
+    
+    depends_on:
+      - keycloak
+
+  # Mock BFF Service for testing
+  bff-service:
+    image: node:18-alpine
+    container_name: bionicpro-bff
+    working_dir: /app
     environment:
-      REACT_APP_API_URL: http://localhost:8000
-      REACT_APP_KEYCLOAK_URL: http://localhost:8080
-      REACT_APP_KEYCLOAK_REALM: reports-realm
-      REACT_APP_KEYCLOAK_CLIENT_ID: reports-frontend
+      - NODE_ENV=development
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=bionicpro
+      - KEYCLOAK_CLIENT_ID=bionicpro-web-shop
+      - PORT=3001
+    
+    volumes:
+      - ./bff:/app
+    
+    ports:
+      - "3001:3001"
+    
+    networks:
+      - bionicpro-network
+    
+    depends_on:
+      - postgres
+      - keycloak
+    
+    command: >
+      sh -c "
+        if [ ! -f package.json ]; then
+          npm init -y
+          npm install express cors helmet morgan dotenv
+          npm install @types/express @types/cors --save-dev
+        fi
+        npm install
+        node server.js
+      "
+
+volumes:
+  postgres-data:
+    driver: local
+  keycloak-data:
+    driver: local
+  frontend-node-modules:
+    driver: local
+
+networks:
+  bionicpro-network:
+    driver: bridge

@@ -1,31 +1,21 @@
-# Build stage
-FROM node:16-alpine as build
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Копируем package.json и package-lock.json
+COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Устанавливаем зависимости
+RUN npm ci --only=production=false
 
-# Copy source code
+# Устанавливаем дополнительные зависимости для PKCE
+RUN npm install react-router-dom @types/react-router-dom
+
+# Копируем исходный код
 COPY . .
 
-# Build the app
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Copy built assets from build stage
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
+# Открываем порт
 EXPOSE 3000
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Запускаем приложение
+CMD ["npm", "start"]
