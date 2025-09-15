@@ -103,43 +103,9 @@ services:
       - bionicpro-network
     
     depends_on:
-      - keycloak
-
-  # Mock BFF Service for testing
-  bff-service:
-    image: node:18-alpine
-    container_name: bionicpro-bff
-    working_dir: /app
-    environment:
-      - NODE_ENV=development
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=bionicpro
-      - KEYCLOAK_CLIENT_ID=bionicpro-web-shop
-      - PORT=3001
-    
-    volumes:
-      - ./bff:/app
-    
-    ports:
-      - "3001:3001"
-    
-    networks:
-      - bionicpro-network
-    
-    depends_on:
       - postgres
       - keycloak
     
-    command: >
-      sh -c "
-        if [ ! -f package.json ]; then
-          npm init -y
-          npm install express cors helmet morgan dotenv
-          npm install @types/express @types/cors --save-dev
-        fi
-        npm install
-        node server.js
-      "
 
   # Redis for session storage
   redis:
