@@ -68,8 +68,8 @@ services:
       - --spi-realm-restapi-extension-allow-http=true
     
     volumes:
-      - ./keycloak/realm-export-auto.json:/opt/keycloak/data/import/realm-export-auto.json
       - keycloak-data:/opt/keycloak/data
+      - ./keycloak/realm-export-auto.json:/opt/keycloak/data/import/realm-export-auto.json
     
     ports:
       - "8080:8080"
@@ -77,9 +77,11 @@ services:
     networks:
       - bionicpro-network
     
-    # Убираем healthcheck для быстрого запуска
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo 'OK' >&3"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   frontend:
     build:
@@ -128,6 +130,38 @@ services:
       timeout: 10s
       retries: 3
 
+  # Автоматическая настройка LDAP мапперов
+  keycloak-init:
+    image: alpine:latest
+    container_name: bionicpro-keycloak-init
+    depends_on:
+      - keycloak
+      - openldap
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - bionicpro-network
+    command: >
+      sh -c "
+        apk add --no-cache curl docker-cli
+        echo '🔧 Ждем запуска Keycloak...'
+        while ! curl -s http://keycloak:8080/health > /dev/null; do
+          echo '⏳ Ждем Keycloak...'
+          sleep 5
+        done
+        echo '✅ Keycloak готов!'
+        sleep 10
+        echo '🔗 Настраиваем LDAP мапперы...'
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin123
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-username-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-email-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-firstname-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-lastname-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
+        docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-role-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
+        echo '✅ LDAP мапперы настроены!'
+      "
+    restart: "no"
+
   # OpenLDAP Server for International Offices
   openldap:
     image: osixia/openldap:1.5.0
@@ -144,6 +178,11 @@ services:
       - "636:636"
     networks:
       - bionicpro-network
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=example,dc=com", "-D", "cn=admin,dc=example,dc=com", "-w", "admin", "(objectclass=*)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # BionicPRO Auth Service (BFF)
   bionicpro-auth:

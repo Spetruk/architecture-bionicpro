@@ -41,21 +41,27 @@ function HomePage() {
             <div className="text-center text-sm text-gray-500">
               <p className="mb-2"><strong>Тестовые учетные данные:</strong></p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                <div className="bg-gray-50 p-3 rounded">
-                  <p><strong>Пилот протеза:</strong></p>
+                <div className="bg-blue-50 p-3 rounded">
+                  <p><strong>Keycloak пользователи:</strong></p>
                   <p>testuser / password123</p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p><strong>Покупатель:</strong></p>
                   <p>buyer / buyer123</p>
                 </div>
+                <div className="bg-green-50 p-3 rounded">
+                  <p><strong>LDAP пользователи:</strong></p>
+                  <p>john.doe / password</p>
+                  <p>jane.smith / password</p>
+                  <p>alex.johnson / password</p>
+                </div>
               </div>
+              <p className="mt-2 text-xs text-orange-600">
+                🛡️ MFA обязателен для всех пользователей
+              </p>
             </div>
           </div>
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-center">
               <div className="text-3xl mb-3">🔐</div>
@@ -68,10 +74,20 @@ function HomePage() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-center">
-              <div className="text-3xl mb-3">🌍</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Multi-Region IdP</h3>
+              <div className="text-3xl mb-3">🏢</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">LDAP Integration</h3>
               <p className="text-gray-600 text-sm">
-                Поддержка региональных провайдеров идентификации (RU, EU, US)
+                Интеграция с OpenLDAP для международных представительств
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">MFA (TOTP)</h3>
+              <p className="text-gray-600 text-sm">
+                Двухфакторная аутентификация с Google Authenticator
               </p>
             </div>
           </div>

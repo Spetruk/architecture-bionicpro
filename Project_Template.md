@@ -11,6 +11,8 @@ docker-compose ps
 
 # Логи
 docker-compose logs -f
+
+# LDAP мапперы настраиваются автоматически
 ```
 
 **Сервисы:**
@@ -21,13 +23,13 @@ docker-compose logs -f
 ## 👥 Тестовые пользователи
 
 ### Keycloak пользователи:
-- `buyer` / `buyer123` (покупатель)
-- `testuser` / `password123` (пилот протеза)
+- `buyer` / `buyer123` (покупатель) + **MFA обязателен**
+- `testuser` / `password123` (пилот протеза) + **MFA обязателен**
 
 ### LDAP пользователи:
-- `john.doe` / `password` (роль: prothetic_user)
-- `jane.smith` / `password` (роль: user)
-- `alex.johnson` / `password` (роль: prothetic_user)
+- `john.doe` / `password` + **MFA обязателен**
+- `jane.smith` / `password` + **MFA обязателен**  
+- `alex.johnson` / `password` + **MFA обязателен**
 
 ## 🔐 PKCE тестирование
 
@@ -44,6 +46,20 @@ LDAP настроен с пользователями из `ldap/config.ldif`:
 - Домен: `dc=example,dc=com`
 - Пользователи: `ou=People,dc=example,dc=com`
 - Роли: `ou=Groups,dc=example,dc=com`
+
+## 🛡️ MFA (Multi-Factor Authentication)
+
+**Настройка OTP:**
+- Все пользователи обязаны настроить TOTP при первом входе
+- Поддерживаемые приложения: Google Authenticator, Microsoft Authenticator
+- Алгоритм: HMAC-SHA1, 6 цифр, период 30 секунд
+
+**Тестирование MFA:**
+1. Войти как `testuser` / `password123`
+2. Система потребует настроить OTP
+3. Отсканировать QR-код в Google Authenticator
+4. Ввести код из приложения
+5. При следующих входах потребуется OTP
 
 ## 📊 Архитектура
 

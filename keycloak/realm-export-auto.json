@@ -21,7 +21,7 @@
   "maxDeltaTimeSeconds": 43200,
   "failureFactor": 30,
   "defaultRoles": ["default-roles-bionicpro", "offline_access", "uma_authorization"],
-  "requiredCredentials": ["password"],
+  "requiredCredentials": ["password", "otp"],
   "accessTokenLifespan": 120,
   "accessTokenLifespanForImplicitFlow": 120,
   "refreshTokenMaxReuse": 0,
@@ -35,6 +35,25 @@
   "accessCodeLifespanLogin": 1800,
   "actionTokenGeneratedByAdminLifespan": 43200,
   "actionTokenGeneratedByUserLifespan": 300,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpPolicyCodeReusable": false,
+  "otpSupportedApplications": ["totpAppGoogleName", "totpAppMicrosoftAuthenticatorName"],
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10,
+      "config": {}
+    }
+  ],
   "clients": [
     {
       "id": "bionicpro-web-shop-id",
@@ -411,7 +430,7 @@
         }
       ],
       "disableableCredentialTypes": [],
-      "requiredActions": [],
+      "requiredActions": ["CONFIGURE_TOTP"],
       "realmRoles": [
         "prosthetic-pilot",
         "default-roles-bionicpro"
@@ -436,7 +455,7 @@
         }
       ],
       "disableableCredentialTypes": [],
-      "requiredActions": [],
+      "requiredActions": ["CONFIGURE_TOTP"],
       "realmRoles": [
         "prosthetic-buyer",
         "default-roles-bionicpro"
@@ -463,7 +482,7 @@
           "evictionMinute": [],
           "maxLifespan": [],
           "batchSizeForSync": ["1000"],
-          "editMode": ["READ_ONLY"],
+          "editMode": ["WRITABLE"],
           "importEnabled": ["true"],
           "syncRegistrations": ["false"],
           "vendor": ["other"],
@@ -471,16 +490,17 @@
           "rdnLDAPAttribute": ["uid"],
           "uuidLDAPAttribute": ["entryUUID"],
           "userObjectClasses": ["inetOrgPerson"],
-          "connectionUrl": ["ldap://ldap:389"],
-          "usersDn": ["ou=offices,dc=bionicpro,dc=com"],
+          "connectionUrl": ["ldap://openldap:389"],
+          "usersDn": ["ou=People,dc=example,dc=com"],
           "authType": ["simple"],
-          "bindDn": ["cn=admin,dc=bionicpro,dc=com"],
-          "bindCredential": ["admin123"],
+          "bindDn": ["cn=admin,dc=example,dc=com"],
+          "bindCredential": ["admin"],
           "customUserSearchFilter": ["(objectClass=inetOrgPerson)"],
           "searchScope": ["2"],
           "validatePasswordPolicy": ["false"],
           "trustEmail": ["false"],
-          "useTruststoreSpi": ["ldapsOnly"],
+          "useTruststoreSpi": ["never"],
+          "debug": ["true"],
           "connectionPooling": ["true"],
           "connectionPoolingAuthentication": ["simple"],
           "connectionPoolingDebug": ["false"],
@@ -508,7 +528,7 @@
         "providerId": "role-ldap-mapper",
         "subType": "",
         "config": {
-          "roles.dn": ["ou=roles,dc=bionicpro,dc=com"],
+          "roles.dn": ["ou=Groups,dc=example,dc=com"],
           "role.name.ldap.attribute": ["cn"],
           "role.object.classes": ["groupOfNames"],
           "role.filter": ["(objectClass=groupOfNames)"],
@@ -534,7 +554,7 @@
         "config": {
           "ldap.attribute": ["uid"],
           "is.mandatory.in.ldap": ["true"],
-          "always.read.value.from.ldap": ["false"],
+          "always.read.value.from.ldap": ["true"],
           "read.only": ["true"],
           "user.model.attribute": ["username"]
         }
@@ -547,7 +567,7 @@
         "config": {
           "ldap.attribute": ["mail"],
           "is.mandatory.in.ldap": ["true"],
-          "always.read.value.from.ldap": ["false"],
+          "always.read.value.from.ldap": ["true"],
           "read.only": ["true"],
           "user.model.attribute": ["email"]
         }
@@ -560,7 +580,7 @@
         "config": {
           "ldap.attribute": ["givenName"],
           "is.mandatory.in.ldap": ["false"],
-          "always.read.value.from.ldap": ["false"],
+          "always.read.value.from.ldap": ["true"],
           "read.only": ["true"],
           "user.model.attribute": ["firstName"]
         }
@@ -573,7 +593,7 @@
         "config": {
           "ldap.attribute": ["sn"],
           "is.mandatory.in.ldap": ["false"],
-          "always.read.value.from.ldap": ["false"],
+          "always.read.value.from.ldap": ["true"],
           "read.only": ["true"],
           "user.model.attribute": ["lastName"]
         }
