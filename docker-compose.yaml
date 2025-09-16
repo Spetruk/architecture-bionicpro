@@ -57,11 +57,15 @@ services:
       # PKCE and OAuth settings
       KC_FEATURES: token-exchange,admin-fine-grained-authz
       
+      # Import settings
+      KC_IMPORT_STRATEGY: OVERWRITE_EXISTING
+      
     
     command: 
       - start-dev
       - --import-realm
       - --override=true
+      - --spi-realm-restapi-extension-allow-http=true
     
     volumes:
       - ./keycloak/realm-export-auto.json:/opt/keycloak/data/import/realm-export-auto.json
@@ -124,6 +128,23 @@ services:
       timeout: 10s
       retries: 3
 
+  # OpenLDAP Server for International Offices
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: bionicpro-openldap
+    command: --copy-service
+    volumes:
+      - ./ldap/config.ldif:/container/service/slapd/assets/config/bootstrap/ldif/50-bootstrap.ldif
+    environment:
+      - LDAP_ORGANISATION=example-com
+      - LDAP_DOMAIN=example.com
+      - LDAP_ADMIN_PASSWORD=admin
+    ports:
+      - "389:389"
+      - "636:636"
+    networks:
+      - bionicpro-network
+
   # BionicPRO Auth Service (BFF)
   bionicpro-auth:
     build:
@@ -156,6 +177,10 @@ volumes:
   frontend-node-modules:
     driver: local
   redis-data:
+    driver: local
+  ldap-data:
+    driver: local
+  ldap-config:
     driver: local
 
 networks:

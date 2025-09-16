@@ -278,6 +278,118 @@
         "composite": false,
         "clientRole": false,
         "containerId": "bionicpro"
+      },
+      {
+        "id": "russia-manager-id",
+        "name": "russia-managers",
+        "description": "Менеджеры российского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "russia-operator-id",
+        "name": "russia-operators",
+        "description": "Операторы российского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "russia-ml-engineer-id",
+        "name": "russia-ml-engineers",
+        "description": "ML инженеры российского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "russia-sales-id",
+        "name": "russia-sales",
+        "description": "Отдел продаж российского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "eu-manager-id",
+        "name": "eu-managers",
+        "description": "Менеджеры европейского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "eu-operator-id",
+        "name": "eu-operators",
+        "description": "Операторы европейского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "eu-ml-engineer-id",
+        "name": "eu-ml-engineers",
+        "description": "ML инженеры европейского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "eu-sales-id",
+        "name": "eu-sales",
+        "description": "Отдел продаж европейского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "us-manager-id",
+        "name": "us-managers",
+        "description": "Менеджеры американского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "us-operator-id",
+        "name": "us-operators",
+        "description": "Операторы американского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "us-ml-engineer-id",
+        "name": "us-ml-engineers",
+        "description": "ML инженеры американского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "us-sales-id",
+        "name": "us-sales",
+        "description": "Отдел продаж американского офиса",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "global-manager-id",
+        "name": "global-managers",
+        "description": "Глобальные менеджеры всех офисов",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
+      },
+      {
+        "id": "global-ml-engineer-id",
+        "name": "global-ml-engineers",
+        "description": "Глобальные ML инженеры всех офисов",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "bionicpro"
       }
     ]
   },
@@ -332,5 +444,140 @@
       "notBefore": 0,
       "groups": []
     }
-  ]
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "id": "ldap-bionicpro",
+        "name": "BionicPRO LDAP",
+        "providerId": "ldap",
+        "subType": "",
+        "config": {
+          "enabled": ["true"],
+          "priority": ["0"],
+          "fullSyncPeriod": ["-1"],
+          "changedSyncPeriod": ["-1"],
+          "cachePolicy": ["DEFAULT"],
+          "evictionDay": [],
+          "evictionHour": [],
+          "evictionMinute": [],
+          "maxLifespan": [],
+          "batchSizeForSync": ["1000"],
+          "editMode": ["READ_ONLY"],
+          "importEnabled": ["true"],
+          "syncRegistrations": ["false"],
+          "vendor": ["other"],
+          "usernameLDAPAttribute": ["uid"],
+          "rdnLDAPAttribute": ["uid"],
+          "uuidLDAPAttribute": ["entryUUID"],
+          "userObjectClasses": ["inetOrgPerson"],
+          "connectionUrl": ["ldap://ldap:389"],
+          "usersDn": ["ou=offices,dc=bionicpro,dc=com"],
+          "authType": ["simple"],
+          "bindDn": ["cn=admin,dc=bionicpro,dc=com"],
+          "bindCredential": ["admin123"],
+          "customUserSearchFilter": ["(objectClass=inetOrgPerson)"],
+          "searchScope": ["2"],
+          "validatePasswordPolicy": ["false"],
+          "trustEmail": ["false"],
+          "useTruststoreSpi": ["ldapsOnly"],
+          "connectionPooling": ["true"],
+          "connectionPoolingAuthentication": ["simple"],
+          "connectionPoolingDebug": ["false"],
+          "connectionPoolingInitsize": ["5"],
+          "connectionPoolingMaxsize": ["100"],
+          "connectionPoolingPrefsize": ["5"],
+          "connectionPoolingProtocol": ["plain"],
+          "connectionPoolingTimeout": ["60000"],
+          "connectionTimeout": ["5000"],
+          "readTimeout": ["60000"],
+          "pagination": ["true"],
+          "allowKerberos": ["false"],
+          "serverPrincipal": [],
+          "keyTab": [],
+          "kerberosRealm": [],
+          "debug": ["false"],
+          "useKerberosForPasswordAuthentication": ["false"]
+        }
+      }
+    ],
+    "org.keycloak.storage.ldap.mappers.LDAPStorageMapper": [
+      {
+        "id": "ldap-role-mapper",
+        "name": "role-mapper",
+        "providerId": "role-ldap-mapper",
+        "subType": "",
+        "config": {
+          "roles.dn": ["ou=roles,dc=bionicpro,dc=com"],
+          "role.name.ldap.attribute": ["cn"],
+          "role.object.classes": ["groupOfNames"],
+          "role.filter": ["(objectClass=groupOfNames)"],
+          "membership.ldap.attribute": ["member"],
+          "membership.attribute.type": ["DN"],
+          "membership.user.ldap.attribute": ["uid"],
+          "user.roles.retrieve.strategy": ["LOAD_ROLES_BY_MEMBER_ATTRIBUTE"],
+          "memberof.ldap.attribute": ["memberOf"],
+          "mapped.role.attribute": ["cn"],
+          "mode": ["READ_ONLY"],
+          "user.roles.retrieve.strategy": ["LOAD_ROLES_BY_MEMBER_ATTRIBUTE"],
+          "roles.ldap.filter": ["(objectClass=groupOfNames)"],
+          "role.attribute": ["cn"],
+          "client.id": [],
+          "use.realm.roles.mapping": ["true"]
+        }
+      },
+      {
+        "id": "ldap-username-mapper",
+        "name": "username-mapper",
+        "providerId": "user-attribute-ldap-mapper",
+        "subType": "",
+        "config": {
+          "ldap.attribute": ["uid"],
+          "is.mandatory.in.ldap": ["true"],
+          "always.read.value.from.ldap": ["false"],
+          "read.only": ["true"],
+          "user.model.attribute": ["username"]
+        }
+      },
+      {
+        "id": "ldap-email-mapper",
+        "name": "email-mapper",
+        "providerId": "user-attribute-ldap-mapper",
+        "subType": "",
+        "config": {
+          "ldap.attribute": ["mail"],
+          "is.mandatory.in.ldap": ["true"],
+          "always.read.value.from.ldap": ["false"],
+          "read.only": ["true"],
+          "user.model.attribute": ["email"]
+        }
+      },
+      {
+        "id": "ldap-firstname-mapper",
+        "name": "firstname-mapper",
+        "providerId": "user-attribute-ldap-mapper",
+        "subType": "",
+        "config": {
+          "ldap.attribute": ["givenName"],
+          "is.mandatory.in.ldap": ["false"],
+          "always.read.value.from.ldap": ["false"],
+          "read.only": ["true"],
+          "user.model.attribute": ["firstName"]
+        }
+      },
+      {
+        "id": "ldap-lastname-mapper",
+        "name": "lastname-mapper",
+        "providerId": "user-attribute-ldap-mapper",
+        "subType": "",
+        "config": {
+          "ldap.attribute": ["sn"],
+          "is.mandatory.in.ldap": ["false"],
+          "always.read.value.from.ldap": ["false"],
+          "read.only": ["true"],
+          "user.model.attribute": ["lastName"]
+        }
+      }
+    ]
+  }
 }
