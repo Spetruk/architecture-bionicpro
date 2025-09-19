@@ -185,6 +185,8 @@ class KeycloakService:
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
             "state": state,
+            "prompt": "login",
+            "max_age": "0",
         }
         
         from urllib.parse import urlencode

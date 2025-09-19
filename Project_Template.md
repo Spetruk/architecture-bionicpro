@@ -19,6 +19,7 @@ docker-compose logs -f
 - Frontend: http://localhost:3000
 - Keycloak: http://localhost:8080 (admin/admin123)
 - LDAP: localhost:389
+- User Profile Service: http://localhost:8002
 
 ## 👥 Тестовые пользователи
 
@@ -30,6 +31,12 @@ docker-compose logs -f
 - `john.doe` / `password` + **MFA обязателен**
 - `jane.smith` / `password` + **MFA обязателен**  
 - `alex.johnson` / `password` + **MFA обязателен**
+
+### 🆕 Яндекс ID:
+- Войдите через **Яндекс ID** на странице входа в Keycloak
+- После успешной аутентификации система запросит **согласие на использование данных**
+- Профиль пользователя будет сохранен в БД с данными из Яндекса
+- **MFA обязателен** для всех пользователей (включая Яндекс ID)
 
 ## 🔐 PKCE тестирование
 

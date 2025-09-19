@@ -32,6 +32,8 @@ class SessionData(BaseModel):
     user_id: str
     username: str
     email: str
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
     roles: List[str]
     access_token: str
     refresh_token: str

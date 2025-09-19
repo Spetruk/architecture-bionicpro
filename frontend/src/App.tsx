@@ -5,6 +5,7 @@ import { BFFDashboard } from './components/BFFDashboard';
 import { BFFAuthGuard } from './components/BFFAuthGuard';
 import { LoginButton } from './components/LoginButton';
 import ReportPage from './components/ReportPage';
+import ConsentScreen from './components/ConsentScreen';
 
 function HomePage() {
   return (
@@ -53,6 +54,13 @@ function HomePage() {
                   <p>alex.johnson / password</p>
                 </div>
               </div>
+              <div className="mt-4">
+                <div className="bg-yellow-50 p-3 rounded">
+                  <p><strong>🆕 Яндекс ID:</strong></p>
+                  <p>Войдите через Яндекс ID на странице входа в Keycloak</p>
+                  <p className="text-xs text-gray-600 mt-1">Через прокси-сервис, который убирает openid scope</p>
+                </div>
+              </div>
               <p className="mt-2 text-xs text-orange-600">
                 🛡️ MFA обязателен для всех пользователей
               </p>
@@ -61,7 +69,7 @@ function HomePage() {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-center">
               <div className="text-3xl mb-3">🔐</div>
@@ -101,6 +109,16 @@ function HomePage() {
               </p>
             </div>
           </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-center">
+              <div className="text-3xl mb-3">🎯</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Яндекс ID</h3>
+              <p className="text-gray-600 text-sm">
+                OAuth 2.0 аутентификация через Яндекс с согласием на данные
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -133,6 +151,7 @@ const App: React.FC = () => {
               <ReportPage />
             </BFFAuthGuard>
           } />
+          <Route path="/consent" element={<ConsentScreen />} />
         </Routes>
       </div>
     </Router>

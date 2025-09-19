@@ -61,6 +61,8 @@ class SessionService:
             user_id=user_info.sub,
             username=user_info.username,
             email=user_info.email,
+            given_name=user_info.given_name,
+            family_name=user_info.family_name,
             roles=user_info.roles,
             access_token=self._encrypt_sensitive_data(access_token),
             refresh_token=self._encrypt_sensitive_data(refresh_token),

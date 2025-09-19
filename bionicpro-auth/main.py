@@ -128,12 +128,36 @@ async def auth_callback(code: str, state: str, response: Response):
                 redirect_uri=redirect_uri,
                 code_verifier=code_verifier.decode('utf-8')
             )
+
+            # Debug: decode token claims to see available fields
+            try:
+                id_claims = keycloak_service.decode_token(tokens.id_token)
+                access_claims = keycloak_service.decode_token(tokens.access_token)
+                logger.info(
+                    "Auth callback tokens decoded: id_claims(keys)=%s, access_claims(keys)=%s",
+                    list(id_claims.keys()), list(access_claims.keys())
+                )
+                logger.info(
+                    "Auth callback id_claims preview: sub=%s, preferred_username=%s, given_name=%s, family_name=%s, email=%s",
+                    id_claims.get("sub"), id_claims.get("preferred_username"), id_claims.get("given_name"), id_claims.get("family_name"), id_claims.get("email")
+                )
+            except Exception as debug_e:
+                logger.warning(f"Failed to decode tokens for debug: {debug_e}")
             
             # Extract user information
             user_info = keycloak_service.extract_user_info(
                 id_token=tokens.id_token,
                 access_token=tokens.access_token
             )
+
+            # Debug: log extracted user_info
+            try:
+                logger.info(
+                    "Extracted user_info: sub=%s, username=%s, email=%s, given_name=%s, family_name=%s, roles=%s",
+                    user_info.sub, user_info.username, user_info.email, user_info.given_name, user_info.family_name, user_info.roles
+                )
+            except Exception:
+                pass
             
             # Create session
             session_id = await session_service.create_session(
@@ -212,6 +236,8 @@ async def get_user_info(session_id: Optional[str] = Depends(get_current_session)
         sub=session_data.user_id,
         username=session_data.username,
         email=session_data.email,
+        given_name=session_data.given_name,
+        family_name=session_data.family_name,
         roles=session_data.roles
     )
 
@@ -245,6 +271,47 @@ async def logout(
         )
     
     return {"success": True, "message": "Logged out successfully"}
+
+
+@app.get("/auth/debug-claims")
+async def debug_claims(session_id: Optional[str] = Depends(get_current_session)):
+    """
+    Debug endpoint: returns decoded ID/Access token claims and extracted user_info for current session.
+    Only available in debug mode.
+    """
+    if not settings.debug:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    session_data = await session_service.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
+    try:
+        id_claims = keycloak_service.decode_token(session_data.id_token)
+    except Exception:
+        id_claims = {"error": "failed_to_decode"}
+
+    try:
+        access_claims = keycloak_service.decode_token(session_data.access_token)
+    except Exception:
+        access_claims = {"error": "failed_to_decode"}
+
+    try:
+        user_info = keycloak_service.extract_user_info(session_data.id_token, session_data.access_token)
+        user_info_dict = user_info.model_dump()
+    except Exception as e:
+        user_info_dict = {"error": f"failed_to_extract: {e}"}
+
+    # Return minimal but useful data
+    return {
+        "id_claims": id_claims,
+        "access_claims": access_claims,
+        "user_info": user_info_dict,
+        "session_id": session_id,
+    }
 
 
 @app.get("/api/protected")
@@ -298,6 +365,46 @@ async def protected_endpoint(
         "roles": session_data.roles,
         "session_id": session_id,
         "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.get("/auth/debug-claims")
+async def debug_claims(request: Request):
+    """
+    Debug endpoint - shows current user's claims from tokens
+    """
+    session_id = request.cookies.get(settings.session_cookie_name)
+    
+    if not session_id:
+        raise HTTPException(status_code=401, detail="No session cookie")
+    
+    session_data = await session_service.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Decode current tokens to see what claims are available
+    try:
+        if hasattr(session_data, 'id_token') and session_data.id_token:
+            id_claims = keycloak_service.decode_token(session_data.id_token)
+        else:
+            id_claims = {"error": "No id_token in session"}
+            
+        if hasattr(session_data, 'access_token') and session_data.access_token:
+            access_claims = keycloak_service.decode_token(session_data.access_token)
+        else:
+            access_claims = {"error": "No access_token in session"}
+    except Exception as e:
+        return {"error": f"Failed to decode tokens: {str(e)}"}
+    
+    return {
+        "username": session_data.username,
+        "id_token_claims": id_claims,
+        "access_token_claims": access_claims,
+        "user_info_from_session": {
+            "given_name": getattr(session_data, 'given_name', None),
+            "family_name": getattr(session_data, 'family_name', None),
+            "email": getattr(session_data, 'email', None)
+        }
     }
 
 
