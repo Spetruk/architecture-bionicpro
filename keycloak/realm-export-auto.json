@@ -527,30 +527,23 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
-    "id" : "a48d652a-a99f-4b99-95ec-b5b5b007a7e1",
+    "id" : "024aa5ef-1186-49ce-b341-0c9d39d50ed4",
     "username" : "alex.johnson",
     "lastName" : "Johnson",
     "email" : "alex@example.com",
     "emailVerified" : false,
     "attributes" : {
       "LDAP_ENTRY_DN" : [ "uid=alex.johnson,ou=People,dc=example,dc=com" ],
-      "LDAP_ID" : [ "9acee8d8-2993-1040-8d4b-adf0f260373d" ]
+      "LDAP_ID" : [ "ad278ed0-29cb-1040-89b8-9d3b7470fc19" ]
     },
     "origin" : "ldap-bionicpro",
-    "createdTimestamp" : 1758294080718,
+    "createdTimestamp" : 1758304076853,
     "enabled" : true,
-    "totp" : true,
+    "totp" : false,
     "federationLink" : "ldap-bionicpro",
-    "credentials" : [ {
-      "id" : "0a2b1f67-07d7-4455-bc87-63f8b18a240d",
-      "type" : "otp",
-      "userLabel" : "2",
-      "createdDate" : 1758302145439,
-      "secretData" : "{\"value\":\"O5LCpa3MkLKp8o0CVCE6\"}",
-      "credentialData" : "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
-    } ],
+    "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
+    "requiredActions" : [ "CONFIGURE_TOTP" ],
     "realmRoles" : [ "prothetic_user", "default-roles-bionicpro" ],
     "notBefore" : 0,
     "groups" : [ ]
@@ -576,17 +569,17 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "5a23e2a4-b0a2-44b1-9203-af89540e5854",
+    "id" : "2c056236-5050-42ac-8cc8-cbe2416170f9",
     "username" : "jane.smith",
     "lastName" : "Smith",
     "email" : "jane@example.com",
     "emailVerified" : false,
     "attributes" : {
       "LDAP_ENTRY_DN" : [ "uid=jane.smith,ou=People,dc=example,dc=com" ],
-      "LDAP_ID" : [ "9ace8fdc-2993-1040-8d4a-adf0f260373d" ]
+      "LDAP_ID" : [ "ad25aa52-29cb-1040-89b7-9d3b7470fc19" ]
     },
     "origin" : "ldap-bionicpro",
-    "createdTimestamp" : 1758294080711,
+    "createdTimestamp" : 1758304076844,
     "enabled" : true,
     "totp" : false,
     "federationLink" : "ldap-bionicpro",
@@ -597,59 +590,24 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "dbb21ca7-bf1f-4b52-8f0c-b6c70c74495a",
+    "id" : "67dc3433-6b9d-4cf3-84b7-2202bf95a3c5",
     "username" : "john.doe",
     "lastName" : "Doe",
     "email" : "john@example.com",
     "emailVerified" : false,
     "attributes" : {
       "LDAP_ENTRY_DN" : [ "uid=john.doe,ou=People,dc=example,dc=com" ],
-      "LDAP_ID" : [ "9ace67e6-2993-1040-8d49-adf0f260373d" ]
+      "LDAP_ID" : [ "ad251632-29cb-1040-89b6-9d3b7470fc19" ]
     },
     "origin" : "ldap-bionicpro",
-    "createdTimestamp" : 1758291504014,
+    "createdTimestamp" : 1758303806777,
     "enabled" : true,
-    "totp" : true,
+    "totp" : false,
     "federationLink" : "ldap-bionicpro",
-    "credentials" : [ {
-      "id" : "9bdfc533-eeca-4c62-921f-7b4dacf5212d",
-      "type" : "otp",
-      "userLabel" : "1",
-      "createdDate" : 1758301449102,
-      "secretData" : "{\"value\":\"WcKq8TJejIpBQB4TvHSz\"}",
-      "credentialData" : "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
-    } ],
+    "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
+    "requiredActions" : [ "CONFIGURE_TOTP" ],
     "realmRoles" : [ "prothetic_user", "default-roles-bionicpro" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "b39c638e-008e-4fdb-b0d0-543efa003455",
-    "username" : "lukepetruk@yandex.ru",
-    "firstName" : "Сергей",
-    "lastName" : "Петрук",
-    "email" : "lukepetruk@yandex.ru",
-    "emailVerified" : false,
-    "createdTimestamp" : 1758295106180,
-    "enabled" : true,
-    "totp" : true,
-    "credentials" : [ {
-      "id" : "64862228-aa64-4326-a66e-16848ac0f0a2",
-      "type" : "otp",
-      "userLabel" : "123",
-      "createdDate" : 1758302078863,
-      "secretData" : "{\"value\":\"TBKoILTJNzzS01k0zMUt\"}",
-      "credentialData" : "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
-    } ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "federatedIdentities" : [ {
-      "identityProvider" : "yandex",
-      "userId" : "1052473466",
-      "userName" : "lukepetruk@yandex.ru"
-    } ],
-    "realmRoles" : [ "default-roles-bionicpro" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -677,23 +635,16 @@
     "email" : "test@bionicpro.ru",
     "emailVerified" : true,
     "enabled" : true,
-    "totp" : true,
+    "totp" : false,
     "credentials" : [ {
       "id" : "615025ed-4c4f-47ee-a060-c42b05fbb0c0",
       "type" : "password",
       "createdDate" : 1758194931488,
       "secretData" : "{\"value\":\"LJSzAf2XWkqq+xRew/Tg3/AK92sSmW289gEIDIw08FA=\",\"salt\":\"RH43JS4nMMDFOTSYVlQboQ==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":5,\"algorithm\":\"argon2\",\"additionalParameters\":{\"hashLength\":[\"32\"],\"memory\":[\"7168\"],\"type\":[\"id\"],\"version\":[\"1.3\"],\"parallelism\":[\"1\"]}}"
-    }, {
-      "id" : "2e99e890-505a-4dbb-a53f-506ed73681e3",
-      "type" : "otp",
-      "userLabel" : "1",
-      "createdDate" : 1758301505236,
-      "secretData" : "{\"value\":\"3yOIxrbgtUkOKc279iJn\"}",
-      "credentialData" : "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
     } ],
     "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
+    "requiredActions" : [ "CONFIGURE_TOTP" ],
     "realmRoles" : [ "prosthetic-pilot", "default-roles-bionicpro" ],
     "notBefore" : 0,
     "groups" : [ ]
@@ -909,6 +860,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
+    "secret" : "WeSSfRqY51mqACtzhc7ZnpYHulAWjzjS",
     "redirectUris" : [ ],
     "webOrigins" : [ ],
     "notBefore" : 0,
@@ -924,6 +876,7 @@
     "protocol" : "openid-connect",
     "attributes" : {
       "realm_client" : "true",
+      "client.secret.creation.time" : "1758303730",
       "post.logout.redirect.uris" : "+"
     },
     "authenticationFlowBindingOverrides" : { },
@@ -937,8 +890,9 @@
       "consentRequired" : false,
       "config" : {
         "user.session.note" : "clientHost",
-        "id.token.claim" : "true",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientHost",
         "jsonType.label" : "String"
@@ -951,8 +905,9 @@
       "consentRequired" : false,
       "config" : {
         "user.session.note" : "clientAddress",
-        "id.token.claim" : "true",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientAddress",
         "jsonType.label" : "String"
@@ -965,8 +920,9 @@
       "consentRequired" : false,
       "config" : {
         "user.session.note" : "client_id",
-        "id.token.claim" : "true",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "client_id",
         "jsonType.label" : "String"
@@ -1288,7 +1244,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-full-name-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "oidc-usermodel-attribute-mapper" ]
       }
     }, {
       "id" : "0b8cf5c0-c7e2-425f-89bc-d6ceb027ed80",
@@ -1334,7 +1290,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "saml-role-list-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper" ]
       }
     } ],
     "org.keycloak.storage.UserStorageProvider" : [ {
@@ -1374,8 +1330,8 @@
           "config" : {
             "ldap.attribute" : [ "mail" ],
             "is.mandatory.in.ldap" : [ "true" ],
-            "always.read.value.from.ldap" : [ "true" ],
             "read.only" : [ "true" ],
+            "always.read.value.from.ldap" : [ "true" ],
             "user.model.attribute" : [ "email" ]
           }
         }, {
@@ -1387,8 +1343,8 @@
           "config" : {
             "ldap.attribute" : [ "uid" ],
             "is.mandatory.in.ldap" : [ "true" ],
-            "always.read.value.from.ldap" : [ "true" ],
             "read.only" : [ "true" ],
+            "always.read.value.from.ldap" : [ "true" ],
             "user.model.attribute" : [ "username" ]
           }
         }, {
@@ -1424,16 +1380,16 @@
         "fullSyncPeriod" : [ "-1" ],
         "pagination" : [ "true" ],
         "connectionPoolingTimeout" : [ "60000" ],
-        "connectionPooling" : [ "true" ],
         "usersDn" : [ "ou=People,dc=example,dc=com" ],
+        "connectionPooling" : [ "true" ],
         "cachePolicy" : [ "DEFAULT" ],
         "useKerberosForPasswordAuthentication" : [ "false" ],
         "importEnabled" : [ "true" ],
         "enabled" : [ "true" ],
-        "usernameLDAPAttribute" : [ "uid" ],
-        "changedSyncPeriod" : [ "-1" ],
-        "bindCredential" : [ "admin" ],
         "bindDn" : [ "cn=admin,dc=example,dc=com" ],
+        "bindCredential" : [ "admin" ],
+        "changedSyncPeriod" : [ "-1" ],
+        "usernameLDAPAttribute" : [ "uid" ],
         "connectionPoolingMaxsize" : [ "100" ],
         "vendor" : [ "other" ],
         "uuidLDAPAttribute" : [ "entryUUID" ],
@@ -1443,19 +1399,19 @@
         "connectionTimeout" : [ "5000" ],
         "connectionPoolingDebug" : [ "false" ],
         "allowKerberos" : [ "false" ],
-        "customUserSearchFilter" : [ "(objectClass=inetOrgPerson)" ],
         "connectionPoolingAuthentication" : [ "simple" ],
+        "customUserSearchFilter" : [ "(objectClass=inetOrgPerson)" ],
         "debug" : [ "false" ],
         "searchScope" : [ "2" ],
         "useTruststoreSpi" : [ "never" ],
-        "trustEmail" : [ "false" ],
         "priority" : [ "0" ],
+        "trustEmail" : [ "false" ],
         "connectionPoolingPrefsize" : [ "5" ],
         "userObjectClasses" : [ "inetOrgPerson" ],
         "rdnLDAPAttribute" : [ "uid" ],
         "connectionPoolingProtocol" : [ "plain" ],
-        "editMode" : [ "WRITABLE" ],
         "readTimeout" : [ "60000" ],
+        "editMode" : [ "WRITABLE" ],
         "validatePasswordPolicy" : [ "false" ],
         "batchSizeForSync" : [ "1000" ]
       }
