@@ -273,47 +273,6 @@ async def logout(
     return {"success": True, "message": "Logged out successfully"}
 
 
-@app.get("/auth/debug-claims")
-async def debug_claims(session_id: Optional[str] = Depends(get_current_session)):
-    """
-    Debug endpoint: returns decoded ID/Access token claims and extracted user_info for current session.
-    Only available in debug mode.
-    """
-    if not settings.debug:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    if not session_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    session_data = await session_service.get_session(session_id)
-    if not session_data:
-        raise HTTPException(status_code=401, detail="Invalid session")
-
-    try:
-        id_claims = keycloak_service.decode_token(session_data.id_token)
-    except Exception:
-        id_claims = {"error": "failed_to_decode"}
-
-    try:
-        access_claims = keycloak_service.decode_token(session_data.access_token)
-    except Exception:
-        access_claims = {"error": "failed_to_decode"}
-
-    try:
-        user_info = keycloak_service.extract_user_info(session_data.id_token, session_data.access_token)
-        user_info_dict = user_info.model_dump()
-    except Exception as e:
-        user_info_dict = {"error": f"failed_to_extract: {e}"}
-
-    # Return minimal but useful data
-    return {
-        "id_claims": id_claims,
-        "access_claims": access_claims,
-        "user_info": user_info_dict,
-        "session_id": session_id,
-    }
-
-
 @app.get("/api/protected")
 async def protected_endpoint(
     response: Response,

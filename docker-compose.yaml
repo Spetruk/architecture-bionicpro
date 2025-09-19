@@ -150,46 +150,6 @@ services:
       retries: 3
 
 
-  # Автоматическая настройка LDAP мапперов
-  # keycloak-init отключен - используем автоимпорт Keycloak
-  # keycloak-init:
-  #   image: alpine:latest
-  #   container_name: bionicpro-keycloak-init
-  #   depends_on:
-  #     - keycloak
-  #     - openldap
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   networks:
-  #     - bionicpro-network
-  #   command: >
-  #     sh -c "
-  #       apk add --no-cache curl docker-cli
-  #       echo '🔧 Ждем запуска Keycloak...'
-  #       while ! curl -s http://keycloak:8080/health > /dev/null; do
-  #         echo '⏳ Ждем Keycloak...'
-  #         sleep 5
-  #       done
-  #       echo '✅ Keycloak готов!'
-  #       sleep 10
-  #       echo '♻️  Переимпортируем realm bionicpro...'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin123
-  #       # Удаляем realm, если существует
-  #       if docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh get realms/bionicpro > /dev/null 2>&1; then
-  #         docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh delete realms/bionicpro || true
-  #       fi
-  #       # Импортируем realm из файла
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh create realms -f /opt/keycloak/data/import/realm-export-auto.json
-  #       echo '🔗 Настраиваем LDAP мапперы...'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin123
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-username-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-email-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-firstname-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-lastname-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
-  #       docker exec bionicpro-keycloak /opt/keycloak/bin/kcadm.sh update components/ldap-role-mapper -r bionicpro -s 'parentId=ldap-bionicpro'
-  #       echo '✅ LDAP мапперы настроены!'
-  #     "
-  #   restart: "no"
 
   # Keycloak-Yandex Proxy (убирает openid scope из запросов)
   keycloak-yandex-proxy:

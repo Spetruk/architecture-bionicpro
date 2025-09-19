@@ -1,8 +1,0 @@
-{
-  "name": "username-mapper",
-  "identityProviderMapper": "oidc-username-idp-mapper",
-  "config": {
-    "template": "${CLAIM.login}"
-  }
-}
-
