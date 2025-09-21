@@ -190,6 +190,71 @@ services:
       timeout: 10s
       retries: 3
 
+  # CRM Database (PostgreSQL)
+  crm_db: 
+    image: postgres:14
+    container_name: bionicpro-crm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: crm_db
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crm_password
+    volumes:
+      - ./crm-db:/docker-entrypoint-initdb.d
+      - crm-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5444:5432"
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OLAP Database (ClickHouse)
+  olap_db:
+    image: clickhouse/clickhouse-server:latest
+    container_name: bionicpro-olap-db
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9431:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./olap-db:/docker-entrypoint-initdb.d
+      - ./olap-db:/var/lib/clickhouse/user_files
+      - ./olap-db/users.xml:/etc/clickhouse-server/users.d/users.xml
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio
+    container_name: bionicpro-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-storage:/data
+    environment:
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+    command: server --console-address ":9001" /data
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
   postgres-data:
     driver: local
@@ -202,6 +267,12 @@ volumes:
   ldap-data:
     driver: local
   ldap-config:
+    driver: local
+  crm-postgres-data:
+    driver: local
+  clickhouse-data:
+    driver: local
+  minio-storage:
     driver: local
 
 networks:
