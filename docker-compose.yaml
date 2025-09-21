@@ -128,29 +128,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # User Profile Service
-  user-profile-service:
-    build:
-      context: ./user-profile-service
-      dockerfile: Dockerfile
-    container_name: bionicpro-user-profile
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bionicpro
-    ports:
-      - "8002:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - bionicpro-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-
-
   # Keycloak-Yandex Proxy (убирает openid scope из запросов)
   keycloak-yandex-proxy:
     build:

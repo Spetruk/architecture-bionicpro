@@ -19,7 +19,8 @@ docker-compose logs -f
 - Frontend: http://localhost:3000
 - Keycloak: http://localhost:8080 (admin/admin123)
 - LDAP: localhost:389
-- User Profile Service: http://localhost:8002
+- BFF Auth Service: http://localhost:8001
+- Yandex Proxy: http://localhost:8004
 
 ## 👥 Тестовые пользователи
 
