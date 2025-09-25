@@ -7,11 +7,20 @@
 
 interface UserInfo {
   sub: string;
+  crm_user_id: number | null;
   username: string;
   email: string;
   given_name?: string;
   family_name?: string;
   roles: string[];
+  crm_info?: {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+    gender: string;
+    country: string;
+  } | null;
 }
 
 // AuthRequest not needed - BFF handles PKCE server-side

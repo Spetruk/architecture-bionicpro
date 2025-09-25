@@ -9,11 +9,20 @@ import { ReportsComponent } from './ReportsComponent';
 
 interface UserInfo {
   sub: string;
+  crm_user_id: number | null;
   username: string;
   email: string;
   given_name?: string;
   family_name?: string;
   roles: string[];
+  crm_info?: {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+    gender: string;
+    country: string;
+  } | null;
 }
 
 export const BFFDashboard: React.FC = () => {
@@ -179,7 +188,7 @@ export const BFFDashboard: React.FC = () => {
               >
                 🏠 Главная
               </button>
-              {(userInfo?.roles.includes('prosthetic-pilot') || userInfo?.roles.includes('prothetic_user') || userInfo?.roles.includes('prosthetic-buyer')) && (
+              {userInfo?.crm_user_id && (
                 <button
                   onClick={() => setActiveTab('reports')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -343,9 +352,9 @@ export const BFFDashboard: React.FC = () => {
         )}
 
         {/* Reports Tab */}
-        {activeTab === 'reports' && (
+        {activeTab === 'reports' && userInfo?.crm_user_id && (
           <ReportsComponent 
-            userId={1} // Для демо используем user_id=1 
+            userId={userInfo.crm_user_id} // Используем реальный CRM user_id
             className="mb-8"
           />
         )}

@@ -548,6 +548,72 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
+    "id" : "crm-user-1",
+    "username" : "alexis.moore",
+    "firstName" : "Alexis",
+    "lastName" : "Moore",
+    "email" : "alexis.moore@example.com",
+    "emailVerified" : true,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "type" : "password",
+      "value" : "bionicpro123",
+      "temporary" : false
+    } ],
+    "attributes" : {
+      "crm_user_id" : [ "1" ]
+    },
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bionicpro" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "crm-user-2",
+    "username" : "paige.gonzales",
+    "firstName" : "Paige",
+    "lastName" : "Gonzales",
+    "email" : "paige.gonzales@example.com",
+    "emailVerified" : true,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "type" : "password",
+      "value" : "bionicpro123",
+      "temporary" : false
+    } ],
+    "attributes" : {
+      "crm_user_id" : [ "2" ]
+    },
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bionicpro" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "crm-user-3",
+    "username" : "theresa.kelly",
+    "firstName" : "Theresa",
+    "lastName" : "Kelly",
+    "email" : "theresa.kelly@example.com",
+    "emailVerified" : true,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "type" : "password",
+      "value" : "bionicpro123",
+      "temporary" : false
+    } ],
+    "attributes" : {
+      "crm_user_id" : [ "3" ]
+    },
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bionicpro" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "6fa77843-d81a-4d91-a0a8-200d8482f19c",
     "username" : "john.doe",
     "lastName" : "Doe",

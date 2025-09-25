@@ -41,17 +41,24 @@ function HomePage() {
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="text-center text-sm text-gray-500">
               <p className="mb-2"><strong>Тестовые учетные данные:</strong></p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
                 <div className="bg-blue-50 p-3 rounded">
-                  <p><strong>Keycloak пользователи:</strong></p>
-                  <p>testuser / password123</p>
-                  <p>buyer / buyer123</p>
+                  <p><strong>🔐 CRM Пользователи:</strong></p>
+                  <p>alexis.moore / bionicpro123</p>
+                  <p>paige.gonzales / bionicpro123</p>
+                  <p>theresa.kelly / bionicpro123</p>
+                  <p className="text-xs text-blue-600 mt-1">Видят только свои отчеты по CRM ID</p>
                 </div>
                 <div className="bg-green-50 p-3 rounded">
-                  <p><strong>LDAP пользователи:</strong></p>
+                  <p><strong>🏢 LDAP пользователи:</strong></p>
                   <p>john.doe / password</p>
                   <p>jane.smith / password</p>
                   <p>alex.johnson / password</p>
+                </div>
+                <div className="bg-purple-50 p-3 rounded">
+                  <p><strong>👤 Другие:</strong></p>
+                  <p>testuser / password123</p>
+                  <p>buyer / buyer123</p>
                 </div>
               </div>
               <div className="mt-4">

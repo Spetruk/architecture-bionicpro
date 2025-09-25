@@ -16,6 +16,7 @@ from config import settings
 from models import AuthResponse, UserInfo
 from services.keycloak_service import KeycloakService
 from services.session_service import SessionService
+from services.crm_service import CRMService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +41,7 @@ app.add_middleware(
 # Initialize services
 keycloak_service = KeycloakService()
 session_service = SessionService()
+crm_service = CRMService()
 
 
 async def get_current_session(
@@ -234,14 +236,23 @@ async def get_user_info(session_id: Optional[str] = Depends(get_current_session)
     # Update last used timestamp
     await session_service.update_last_used(session_id)
     
-    return UserInfo(
-        sub=session_data.user_id,
-        username=session_data.username,
-        email=session_data.email,
-        given_name=session_data.given_name,
-        family_name=session_data.family_name,
-        roles=session_data.roles
-    )
+    # Получаем реальный user_id из CRM по email
+    crm_user_id = await crm_service.get_user_id_by_email(session_data.email)
+    crm_user_info = None
+    
+    if crm_user_id:
+        crm_user_info = await crm_service.get_user_info_by_id(crm_user_id)
+    
+    return {
+        "sub": session_data.user_id,
+        "crm_user_id": crm_user_id,  # Реальный ID из CRM
+        "username": session_data.username,
+        "email": session_data.email,
+        "given_name": session_data.given_name,
+        "family_name": session_data.family_name,
+        "roles": session_data.roles,
+        "crm_info": crm_user_info
+    }
 
 
 @app.post("/auth/logout")
@@ -421,13 +432,12 @@ async def proxy_get_user_report(
         if not session_data:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
         
-        # Проверяем права доступа - пользователь может получать только свои данные
-        # Простой маппинг для тестирования: любой аутентифицированный пользователь может получить данные пользователя 1
-        session_user_uuid = session_data.user_id  # UUID пользователя
-        logger.info(f"Session user UUID: {session_user_uuid}, requested user_id: {user_id}")
+        # Проверяем права доступа через CRM
+        logger.info(f"Checking access rights for user_id: {user_id}")
+        has_access = await crm_service.validate_user_access(session_data.email, user_id)
         
-        # Для демо: разрешаем доступ к данным пользователей 1, 2, 3
-        if user_id not in [1, 2, 3]:
+        if not has_access:
+            logger.error(f"Access denied for user_id: {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. You can only access your own reports."
@@ -492,10 +502,11 @@ async def proxy_get_user_summary(
             
         logger.info(f"[USER-SUMMARY] Session found, user: {session_data.username}")
         
-        # Проверяем права доступа
-        # Для демо: разрешаем доступ к данным пользователей 1, 2, 3
+        # Проверяем права доступа через CRM
         logger.info(f"[USER-SUMMARY] Checking access rights for user_id: {user_id}")
-        if user_id not in [1, 2, 3]:
+        has_access = await crm_service.validate_user_access(session_data.email, user_id)
+        
+        if not has_access:
             logger.error(f"[USER-SUMMARY] Access denied for user_id: {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
