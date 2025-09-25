@@ -1,0 +1,8 @@
+apache-airflow==2.8.0
+apache-airflow-providers-postgres==5.8.0
+apache-airflow-providers-http==4.7.0
+clickhouse-driver==0.2.6
+pandas==2.1.4
+psycopg2-binary==2.9.9
+sqlalchemy==1.4.49
+

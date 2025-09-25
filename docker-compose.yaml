@@ -1,5 +1,5 @@
 services:
-  # PostgreSQL database for Keycloak
+  # PostgreSQL database for Keycloak and OLTP data
   postgres:
     image: postgres:15-alpine
     container_name: bionicpro-postgres
@@ -12,7 +12,7 @@ services:
     
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
     
     ports:
       - "5432:5432"
@@ -177,6 +177,7 @@ services:
       - KEYCLOAK_REALM=bionicpro
       - KEYCLOAK_CLIENT_ID=bionicpro-web-shop
       - REDIS_URL=redis://redis:6379/0
+      - REPORTS_SERVICE_URL=http://reports-service:8002
     ports:
       - "8001:8000"
     depends_on:
@@ -222,7 +223,7 @@ services:
       - "9431:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
-      - ./olap-db:/docker-entrypoint-initdb.d
+      - ./olap-db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./olap-db:/var/lib/clickhouse/user_files
       - ./olap-db/users.xml:/etc/clickhouse-server/users.d/users.xml
     networks:
@@ -255,6 +256,138 @@ services:
       timeout: 20s
       retries: 3
 
+  # Apache Airflow PostgreSQL
+  airflow-postgres:
+    image: postgres:13
+    container_name: bionicpro-airflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - bionicpro-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Apache Airflow Webserver
+  airflow-webserver:
+    image: apache/airflow:2.8.0-python3.11
+    container_name: bionicpro-airflow-webserver
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+      AIRFLOW_CONN_CRM_POSTGRES: 'postgresql://crm_user:crm_password@crm_db:5432/crm_db'
+      AIRFLOW_CONN_OLTP_POSTGRES: 'postgresql://keycloak:keycloak_password@postgres:5432/keycloak'
+      AIRFLOW_CONN_OLAP_CLICKHOUSE: 'clickhouse://default:@olap_db:9000/bionicpro_analytics'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin123
+      _AIRFLOW_DB_UPGRADE: 'true'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    ports:
+      - "8090:8080"
+    networks:
+      - bionicpro-network
+    depends_on:
+      - airflow-postgres
+      - crm_db
+      - olap_db
+    command: >
+      bash -c "
+        airflow db init &&
+        airflow users create --username airflow --password airflow123 --firstname Admin --lastname User --role Admin --email admin@bionicpro.com || true &&
+        airflow webserver
+      "
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Apache Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.8.0-python3.11
+    container_name: bionicpro-airflow-scheduler
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW_CONN_CRM_POSTGRES: 'postgresql://crm_user:crm_password@crm_db:5432/crm_db'
+      AIRFLOW_CONN_OLTP_POSTGRES: 'postgresql://keycloak:keycloak_password@postgres:5432/keycloak'
+      AIRFLOW_CONN_OLAP_CLICKHOUSE: 'clickhouse://default:@olap_db:9000/bionicpro_analytics'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    networks:
+      - bionicpro-network
+    depends_on:
+      - airflow-postgres
+      - crm_db
+      - olap_db
+    command: airflow scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Reports Service
+  reports-service:
+    build:
+      context: ./reports-service
+      dockerfile: Dockerfile
+    container_name: bionicpro-reports-service
+    restart: unless-stopped
+    environment:
+      - BFF_AUTH_URL=http://bionicpro-auth:8000
+      - CLICKHOUSE_HOST=olap_db
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_DATABASE=bionicpro_analytics
+    ports:
+      - "8002:8002"
+    networks:
+      - bionicpro-network
+    depends_on:
+      - olap_db
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Auto ETL Trigger Service
+  auto-etl:
+    image: curlimages/curl:latest
+    container_name: bionicpro-auto-etl
+    restart: "no"
+    networks:
+      - bionicpro-network
+    depends_on:
+      - airflow-webserver
+      - olap_db
+      - crm_db
+    volumes:
+      - ./airflow/auto-etl.sh:/auto-etl.sh
+    entrypoint: ["sh", "/auto-etl.sh"]
+
 volumes:
   postgres-data:
     driver: local
@@ -273,6 +406,8 @@ volumes:
   clickhouse-data:
     driver: local
   minio-storage:
+    driver: local
+  airflow-postgres-data:
     driver: local
 
 networks:

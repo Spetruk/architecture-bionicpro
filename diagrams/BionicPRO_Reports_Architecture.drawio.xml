@@ -1,0 +1,135 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+  <diagram name="Reports ETL Architecture" id="reports-etl">
+    <mxGraphModel dx="1810" dy="1128" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="BionicPRO Reports and Analytics Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="700" y="50" width="600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pilot" value="Pilot User&#xa;[Person]&#xa;&#xa;Requests prosthesis reports" style="html=1;fontSize=11;dashed=0;whiteSpace=wrap;fillColor=#6C6477;strokeColor=#4D4D4D;fontColor=#ffffff;shape=mxgraph.c4.person2;align=center;metaEdit=1;points=[[0.5,0,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0]];resizable=0;" parent="1" vertex="1">
+          <mxGeometry x="180" y="130" width="160" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="prosthesis" value="Bionic Prosthesis&#xa;[IoT Device]&#xa;&#xa;Generates telemetry data" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#8C8496;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#736782;" parent="1" vertex="1">
+          <mxGeometry x="200" y="350" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" value="Web Frontend&#xa;[React App]&#xa;&#xa;Reports UI with download buttons" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#1061B0;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#0D5091;" parent="1" vertex="1">
+          <mxGeometry x="450" y="150" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bff-auth" value="BFF Auth Service&#xa;[FastAPI]&#xa;&#xa;Session management and proxying" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#1061B0;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#0D5091;" parent="1" vertex="1">
+          <mxGeometry x="750" y="150" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="reports-service" value="Reports Service&#xa;[FastAPI]&#xa;&#xa;Generate reports from OLAP data" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#2E7D32;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#1B5E20;" parent="1" vertex="1">
+          <mxGeometry x="1250" y="150" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="oltp-db" value="OLTP Database&#xa;[PostgreSQL]&#xa;&#xa;Prosthesis telemetry data" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#AA4A44;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#8C2E24;" parent="1" vertex="1">
+          <mxGeometry x="200" y="500" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="crm-db" value="CRM Database&#xa;[PostgreSQL]&#xa;&#xa;Customer information" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#AA4A44;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#8C2E24;" parent="1" vertex="1">
+          <mxGeometry x="380" y="370" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="airflow" value="Apache Airflow&#xa;[ETL Platform]&#xa;&#xa;Daily ETL process orchestration" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#FF6F00;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#E65100;" parent="1" vertex="1">
+          <mxGeometry x="660" y="360" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="olap-db" value="OLAP Database&#xa;[ClickHouse]&#xa;&#xa;Analytics data warehouse" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#7B1FA2;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#4A148C;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="360" width="160" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="data-mart" value="Reports Data Mart&#xa;[ClickHouse Table]&#xa;&#xa;User aggregated metrics" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#9C27B0;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#6A1B9A;" parent="1" vertex="1">
+          <mxGeometry x="1110" y="680" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="minio" value="MinIO Storage&#xa;[Object Storage]&#xa;&#xa;Report files storage" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;labelBackgroundColor=none;fillColor=#558B2F;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#33691E;" parent="1" vertex="1">
+          <mxGeometry x="1540" y="160" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="user-frontend" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#707070;" parent="1" source="pilot" target="frontend" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="user-frontend-label" value="Requests reports" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#707070;" parent="user-frontend" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prosthesis-oltp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#707070;" parent="1" source="prosthesis" target="oltp-db" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="prosthesis-oltp-label" value="Telemetry" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#707070;" parent="prosthesis-oltp" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="frontend-bff" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#707070;" parent="1" source="frontend" target="bff-auth" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend-bff-label" value="Authentication" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#707070;" parent="frontend-bff" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bff-reports" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#707070;" parent="1" source="bff-auth" target="reports-service" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="bff-reports-label" value="Proxy requests" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#707070;" parent="bff-reports" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oltp-airflow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FF6F00;" parent="1" source="oltp-db" target="airflow" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oltp-airflow-label" value="Extract telemetry" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#FF6F00;fontStyle=1" parent="oltp-airflow" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="crm-airflow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FF6F00;" parent="1" source="crm-db" target="airflow" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="crm-airflow-label" value="Extract CRM data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#FF6F00;fontStyle=1" parent="crm-airflow" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="airflow-olap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FF6F00;" parent="1" source="airflow" target="olap-db" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="airflow-olap-label" value="Load to data mart" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#FF6F00;fontStyle=1" parent="airflow-olap" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="olap-mart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7B1FA2;" parent="1" source="olap-db" target="data-mart" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="olap-mart-label" value="Reports mart" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#7B1FA2;" parent="olap-mart" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reports-olap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2E7D32;" parent="1" source="reports-service" target="data-mart" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="reports-olap-label" value="Query reports" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#2E7D32;" parent="reports-olap" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reports-minio" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2E7D32;" parent="1" source="reports-service" target="minio" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="reports-minio-label" value="Store files" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#2E7D32;" parent="reports-minio" vertex="1" connectable="0">
+          <mxGeometry x="0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-title" value="ETL Schedule and Security" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="200" y="650" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-schedule" value="• Daily ETL: Extract at midnight&#xa;• Transform and aggregate by user&#xa;• Load to ClickHouse data mart&#xa;• Quality checks and validation" style="text;html=1;strokeColor=#2D7600;fillColor=#60a917;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;strokeWidth=1;fontColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry x="200" y="690" width="300" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-security" value="• Authentication via BFF service&#xa;• Users can only access own reports&#xa;• Token validation and authorization&#xa;• Data access time range validation" style="text;html=1;strokeColor=#2D7600;fillColor=#60a917;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;strokeWidth=1;fontColor=#ffffff;" parent="1" vertex="1">
+          <mxGeometry x="550" y="690" width="300" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

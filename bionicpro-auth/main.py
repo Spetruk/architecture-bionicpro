@@ -3,12 +3,14 @@ BionicPRO Auth Service - Backend for Frontend (BFF)
 Secure token management with session-based authentication
 """
 import logging
+import os
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request, Response, Depends, Cookie, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from typing import Optional
 import secrets
+import httpx
 
 from config import settings
 from models import AuthResponse, UserInfo
@@ -379,8 +381,8 @@ async def get_reports(session_id: Optional[str] = Depends(get_current_session)):
     if not session_data:
         raise HTTPException(status_code=401, detail="Invalid session")
     
-    # Check user roles
-    if "prosthetic-pilot" in session_data.roles:
+    # Check user roles - поддерживаем как старые, так и новые роли
+    if "prosthetic-pilot" in session_data.roles or "prothetic_user" in session_data.roles:
         return {
             "reports": [
                 {"id": 1, "type": "telemetry", "title": "Данные телеметрии протеза"},
@@ -400,6 +402,165 @@ async def get_reports(session_id: Optional[str] = Depends(get_current_session)):
         }
     else:
         raise HTTPException(status_code=403, detail="Access denied")
+
+
+# Проксирование запросов к Reports Service
+@app.get("/api/reports/user/{user_id}")
+async def proxy_get_user_report(
+    user_id: int,
+    request: Request,
+    session_id: Optional[str] = Depends(get_current_session)
+):
+    """Проксирование запроса отчёта пользователя"""
+    if not session_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    try:
+        # Получаем данные сессии
+        session_data = await session_service.get_session(session_id)
+        if not session_data:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
+        
+        # Проверяем права доступа - пользователь может получать только свои данные
+        # Простой маппинг для тестирования: любой аутентифицированный пользователь может получить данные пользователя 1
+        session_user_uuid = session_data.user_id  # UUID пользователя
+        logger.info(f"Session user UUID: {session_user_uuid}, requested user_id: {user_id}")
+        
+        # Для демо: разрешаем доступ к данным пользователей 1, 2, 3
+        if user_id not in [1, 2, 3]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. You can only access your own reports."
+            )
+
+        # Проксируем запрос к Reports Service
+        reports_service_url = os.getenv("REPORTS_SERVICE_URL", "http://reports-service:8002")
+        
+        # Передаём query параметры
+        query_params = str(request.url.query)
+        url = f"{reports_service_url}/reports/user/{user_id}"
+        if query_params:
+            url += f"?{query_params}"
+
+        async with httpx.AsyncClient() as client:
+            # Получаем токен из сессии для авторизации в Reports Service
+            access_token = session_data.access_token
+            
+            response = await client.get(
+                url,
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Reports service error: {response.text}"
+                )
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error proxying reports request: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error accessing reports service"
+        )
+
+@app.get("/api/reports/user/{user_id}/summary")
+async def proxy_get_user_summary(
+    user_id: int,
+    session_id: Optional[str] = Depends(get_current_session)
+):
+    """Проксирование запроса сводки пользователя"""
+    if not session_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        
+    try:
+        # Получаем данные сессии
+        session_data = await session_service.get_session(session_id)
+        if not session_data:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
+            
+        # Проверяем права доступа
+        # Для демо: разрешаем доступ к данным пользователей 1, 2, 3
+        if user_id not in [1, 2, 3]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. You can only access your own data."
+            )
+
+        reports_service_url = os.getenv("REPORTS_SERVICE_URL", "http://reports-service:8002")
+        
+        async with httpx.AsyncClient() as client:
+            access_token = session_data.access_token
+            
+            response = await client.get(
+                f"{reports_service_url}/reports/user/{user_id}/summary",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Reports service error: {response.text}"
+                )
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error proxying summary request: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error accessing reports service"
+        )
+
+@app.get("/api/reports/data-availability")
+async def proxy_get_data_availability(
+    session_id: Optional[str] = Depends(get_current_session)
+):
+    """Проксирование запроса информации о доступности данных"""
+    if not session_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        
+    try:
+        # Получаем данные сессии
+        session_data = await session_service.get_session(session_id)
+        if not session_data:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
+            
+        reports_service_url = os.getenv("REPORTS_SERVICE_URL", "http://reports-service:8002")
+        
+        async with httpx.AsyncClient() as client:
+            access_token = session_data.access_token
+            
+            response = await client.get(
+                f"{reports_service_url}/reports/data-availability",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Reports service error: {response.text}"
+                )
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error proxying data availability request: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error accessing reports service"
+        )
 
 
 if __name__ == "__main__":

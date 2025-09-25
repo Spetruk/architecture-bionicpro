@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Security Configuration
     session_secret_key: str = "bionicpro-super-secret-key-change-in-production"
     session_cookie_name: str = "bionicpro_session"
-    session_max_age: int = 3600  # 1 hour
+    session_max_age: int = 7200  # 2 hours
     
     # CORS Configuration  
     cors_origins: List[str] = ["http://localhost:3000", "http://frontend:3000"]
