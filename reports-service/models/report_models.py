@@ -82,11 +82,10 @@ class ReportResponse(BaseModel):
     
 class DataAvailability(BaseModel):
     """Информация о доступности данных"""
-    earliest_date: date = Field(..., description="Самая ранняя доступная дата")
-    latest_date: date = Field(..., description="Последняя обработанная дата")
-    total_processed_days: int = Field(..., description="Общее количество обработанных дней")
-    last_etl_run: datetime = Field(..., description="Время последнего запуска ETL")
-    data_quality_status: str = Field(..., description="Статус качества данных")
+    reports_available: bool = Field(..., description="Доступны ли отчеты в витрине данных")
+    latest_report_date: Optional[str] = Field(None, description="Последняя дата отчета")
+    total_reports: int = Field(..., description="Общее количество отчетов")
+    telemetry_data_available: bool = Field(..., description="Доступны ли исходные данные телеметрии")
 
 class UserSummary(BaseModel):
     """Краткая сводка по пользователю"""

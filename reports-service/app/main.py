@@ -19,7 +19,8 @@ from models.report_models import (
     ReportResponse, 
     UserReport,
     TelemetryMetrics,
-    UsageStatistics
+    UsageStatistics,
+    DataAvailability
 )
 from services.clickhouse_service import ClickHouseService
 from services.auth_service import AuthService
@@ -107,7 +108,7 @@ async def health_check():
             detail="Service unhealthy"
         )
 
-@app.get("/reports/user/{user_id}", response_model=UserReport)
+@app.get("/reports/user/{user_id}")
 async def get_user_report(
     user_id: int,
     start_date: Optional[date] = None,
@@ -172,7 +173,7 @@ async def get_user_report(
             detail="Error generating report"
         )
 
-@app.get("/reports/user/{user_id}/summary", response_model=dict)
+@app.get("/reports/user/{user_id}/summary")
 async def get_user_summary(
     user_id: int,
     current_user: dict = Depends(get_current_user)
@@ -190,8 +191,17 @@ async def get_user_summary(
     
     try:
         summary = await clickhouse_service.get_user_summary(user_id)
+        
+        if not summary:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No summary data found for user {user_id}"
+            )
+            
         return summary
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating summary for user {user_id}: {e}")
         raise HTTPException(
@@ -199,71 +209,8 @@ async def get_user_summary(
             detail="Error generating summary"
         )
 
-@app.get("/reports/user/{user_id}/download")
-async def download_user_report(
-    user_id: int,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    format: str = "pdf",
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Скачивание отчёта в указанном формате (PDF, Excel, CSV)
-    """
-    
-    # Проверяем права доступа (закомментировано для демо)
-    # if current_user.get("user_id") != user_id and current_user.get("sub") != str(user_id):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Access denied. You can only download your own reports."
-    #     )
-    
-    if format not in ["pdf", "excel", "csv"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Supported formats: pdf, excel, csv"
-        )
-    
-    try:
-        # Получаем данные отчёта
-        report_data = await clickhouse_service.get_user_report(
-            user_id=user_id,
-            start_date=start_date or date.today() - timedelta(days=30),
-            end_date=end_date or date.today()
-        )
-        
-        # Генерируем файл отчёта
-        file_content = await clickhouse_service.generate_report_file(
-            report_data=report_data,
-            format=format,
-            user_id=user_id
-        )
-        
-        # Возвращаем файл
-        from fastapi.responses import Response
-        
-        content_types = {
-            "pdf": "application/pdf",
-            "excel": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "csv": "text/csv"
-        }
-        
-        filename = f"bionicpro_report_user_{user_id}_{start_date}_{end_date}.{format}"
-        
-        return Response(
-            content=file_content,
-            media_type=content_types[format],
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )
-        
-    except Exception as e:
-        logger.error(f"Error generating downloadable report for user {user_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error generating downloadable report"
-        )
 
-@app.get("/reports/data-availability")
+@app.get("/reports/data-availability", response_model=DataAvailability)
 async def get_data_availability(
     current_user: dict = Depends(get_current_user)
 ):

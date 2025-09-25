@@ -57,21 +57,19 @@ export interface UserReport {
 
 export interface UserSummary {
   user_id: number;
-  total_days_with_data: number;
-  avg_daily_movements: number;
-  avg_battery_health: number;
-  most_active_muscle_group: string;
-  usage_trend: string;
+  customer_name: string;
+  prosthesis_type: string;
+  total_movements: number;
+  usage_intensity: string;
+  data_quality_score: number;
   last_activity_date: string;
-  overall_performance_score: number;
 }
 
 export interface DataAvailability {
-  earliest_date: string;
-  latest_date: string;
-  total_processed_days: number;
-  last_etl_run: string;
-  data_quality_status: string;
+  reports_available: boolean;
+  latest_report_date: string | null;
+  total_reports: number;
+  telemetry_data_available: boolean;
 }
 
 export class ReportsService {
@@ -153,42 +151,6 @@ export class ReportsService {
     }
   }
 
-  /**
-   * Скачивание отчёта в указанном формате
-   */
-  async downloadReport(
-    userId: number,
-    format: 'pdf' | 'excel' | 'csv',
-    startDate?: string,
-    endDate?: string
-  ): Promise<Blob> {
-    try {
-      const params = new URLSearchParams();
-      params.append('format', format);
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
-
-      const response = await this.authService.fetchProtected(
-        `${this.reportsApiUrl}/api/reports/user/${userId}/download?${params.toString()}`,
-        {
-          method: 'GET',
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Доступ запрещён. Вы можете скачивать только свои отчёты.');
-        } else {
-          throw new Error(`Ошибка скачивания отчёта: ${response.status}`);
-        }
-      }
-
-      return await response.blob();
-    } catch (error) {
-      console.error('Error downloading report:', error);
-      throw error;
-    }
-  }
 
   /**
    * Получение информации о доступности данных
@@ -216,19 +178,6 @@ export class ReportsService {
     }
   }
 
-  /**
-   * Утилита для скачивания файла
-   */
-  downloadFile(blob: Blob, filename: string): void {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  }
 
   /**
    * Форматирование даты для API

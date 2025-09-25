@@ -475,37 +475,56 @@ async def proxy_get_user_summary(
     session_id: Optional[str] = Depends(get_current_session)
 ):
     """Проксирование запроса сводки пользователя"""
+    logger.info(f"[USER-SUMMARY] Request received for user_id: {user_id}, session_id: {session_id[:10] if session_id else 'None'}...")
+    
     if not session_id:
+        logger.error("[USER-SUMMARY] No session_id provided")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         
     try:
         # Получаем данные сессии
+        logger.info(f"[USER-SUMMARY] Getting session data for session_id: {session_id[:10]}...")
         session_data = await session_service.get_session(session_id)
+        
         if not session_data:
+            logger.error(f"[USER-SUMMARY] Session not found for session_id: {session_id[:10]}...")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
             
+        logger.info(f"[USER-SUMMARY] Session found, user: {session_data.username}")
+        
         # Проверяем права доступа
         # Для демо: разрешаем доступ к данным пользователей 1, 2, 3
+        logger.info(f"[USER-SUMMARY] Checking access rights for user_id: {user_id}")
         if user_id not in [1, 2, 3]:
+            logger.error(f"[USER-SUMMARY] Access denied for user_id: {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. You can only access your own data."
             )
 
         reports_service_url = os.getenv("REPORTS_SERVICE_URL", "http://reports-service:8002")
+        logger.info(f"[USER-SUMMARY] Reports service URL: {reports_service_url}")
         
         async with httpx.AsyncClient() as client:
             access_token = session_data.access_token
+            logger.info(f"[USER-SUMMARY] Making request with token: {access_token[:20] if access_token else 'None'}...")
+            
+            full_url = f"{reports_service_url}/reports/user/{user_id}/summary"
+            logger.info(f"[USER-SUMMARY] Full URL: {full_url}")
             
             response = await client.get(
-                f"{reports_service_url}/reports/user/{user_id}/summary",
+                full_url,
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=30.0
             )
             
+            logger.info(f"[USER-SUMMARY] Response status: {response.status_code}")
+            logger.info(f"[USER-SUMMARY] Response body: {response.text[:500]}...")
+            
             if response.status_code == 200:
                 return response.json()
             else:
+                logger.error(f"[USER-SUMMARY] Reports service error: {response.status_code} - {response.text}")
                 raise HTTPException(
                     status_code=response.status_code,
                     detail=f"Reports service error: {response.text}"
@@ -514,7 +533,9 @@ async def proxy_get_user_summary(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error proxying summary request: {e}")
+        logger.error(f"[USER-SUMMARY] Exception occurred: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"[USER-SUMMARY] Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error accessing reports service"
@@ -525,29 +546,45 @@ async def proxy_get_data_availability(
     session_id: Optional[str] = Depends(get_current_session)
 ):
     """Проксирование запроса информации о доступности данных"""
+    logger.info(f"[DATA-AVAILABILITY] Request received, session_id: {session_id[:10] if session_id else 'None'}...")
+    
     if not session_id:
+        logger.error("[DATA-AVAILABILITY] No session_id provided")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         
     try:
         # Получаем данные сессии
+        logger.info(f"[DATA-AVAILABILITY] Getting session data for session_id: {session_id[:10]}...")
         session_data = await session_service.get_session(session_id)
+        
         if not session_data:
+            logger.error(f"[DATA-AVAILABILITY] Session not found for session_id: {session_id[:10]}...")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
             
+        logger.info(f"[DATA-AVAILABILITY] Session found, user: {session_data.username}")
         reports_service_url = os.getenv("REPORTS_SERVICE_URL", "http://reports-service:8002")
+        logger.info(f"[DATA-AVAILABILITY] Reports service URL: {reports_service_url}")
         
         async with httpx.AsyncClient() as client:
             access_token = session_data.access_token
+            logger.info(f"[DATA-AVAILABILITY] Making request with token: {access_token[:20] if access_token else 'None'}...")
+            
+            full_url = f"{reports_service_url}/reports/data-availability"
+            logger.info(f"[DATA-AVAILABILITY] Full URL: {full_url}")
             
             response = await client.get(
-                f"{reports_service_url}/reports/data-availability",
+                full_url,
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=30.0
             )
             
+            logger.info(f"[DATA-AVAILABILITY] Response status: {response.status_code}")
+            logger.info(f"[DATA-AVAILABILITY] Response body: {response.text[:500]}...")
+            
             if response.status_code == 200:
                 return response.json()
             else:
+                logger.error(f"[DATA-AVAILABILITY] Reports service error: {response.status_code} - {response.text}")
                 raise HTTPException(
                     status_code=response.status_code,
                     detail=f"Reports service error: {response.text}"
@@ -556,11 +593,14 @@ async def proxy_get_data_availability(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error proxying data availability request: {e}")
+        logger.error(f"[DATA-AVAILABILITY] Exception occurred: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"[DATA-AVAILABILITY] Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error accessing reports service"
         )
+
 
 
 if __name__ == "__main__":

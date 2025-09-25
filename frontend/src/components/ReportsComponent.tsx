@@ -26,7 +26,6 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
   // Состояние формы
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'excel' | 'csv'>('pdf');
 
   useEffect(() => {
     // Устанавливаем период по умолчанию (последние 30 дней)
@@ -79,31 +78,6 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
     }
   };
 
-  const handleDownloadReport = async () => {
-    if (!report) {
-      setError('Сначала сгенерируйте отчёт');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const blob = await reportsService.downloadReport(
-        userId,
-        selectedFormat,
-        startDate,
-        endDate
-      );
-
-      const filename = `bionicpro_report_${userId}_${startDate}_${endDate}.${selectedFormat}`;
-      reportsService.downloadFile(blob, filename);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка скачивания отчёта');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getBatteryHealthColor = (health: string) => {
     switch (health) {
@@ -144,9 +118,10 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
             <h3 className="text-sm font-medium text-blue-800 mb-2">Доступность данных</h3>
             <div className="text-sm text-blue-700">
-              <p>Данные доступны с {dataAvailability.earliest_date} по {dataAvailability.latest_date}</p>
-              <p>Обработано дней: {dataAvailability.total_processed_days}</p>
-              <p>Последнее обновление: {new Date(dataAvailability.last_etl_run).toLocaleString('ru-RU')}</p>
+              <p>Отчеты доступны: {dataAvailability.reports_available ? 'Да' : 'Нет'}</p>
+              <p>Последняя дата отчета: {dataAvailability.latest_report_date || 'Нет данных'}</p>
+              <p>Всего отчетов: {dataAvailability.total_reports}</p>
+              <p>Телеметрия доступна: {dataAvailability.telemetry_data_available ? 'Да' : 'Нет'}</p>
             </div>
           </div>
         )}
@@ -161,7 +136,7 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              max={dataAvailability?.latest_date}
+              max={dataAvailability?.latest_report_date || undefined}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -174,25 +149,11 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              max={dataAvailability?.latest_date}
+              max={dataAvailability?.latest_report_date || undefined}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Формат скачивания
-            </label>
-            <select
-              value={selectedFormat}
-              onChange={(e) => setSelectedFormat(e.target.value as 'pdf' | 'excel' | 'csv')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="pdf">PDF</option>
-              <option value="excel">Excel</option>
-              <option value="csv">CSV</option>
-            </select>
-          </div>
 
           <div className="flex items-end space-x-2">
             <button
@@ -207,30 +168,40 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
       </div>
 
       {/* Краткая сводка */}
-      {summary && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">📋 Краткая сводка</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{summary.total_days_with_data}</div>
-              <div className="text-sm text-gray-600">Дней с данными</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{Math.round(summary.avg_daily_movements)}</div>
-              <div className="text-sm text-gray-600">Среднее движений/день</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{(summary.overall_performance_score * 100).toFixed(1)}%</div>
-              <div className="text-sm text-gray-600">Общая производительность</div>
-            </div>
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">📋 Краткая сводка</h3>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="text-gray-500">Загрузка данных...</div>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <p><strong>Основная группа мышц:</strong> {summary.most_active_muscle_group}</p>
-            <p><strong>Последняя активность:</strong> {summary.last_activity_date}</p>
-            <p><strong>Тренд использования:</strong> {summary.usage_trend}</p>
+        ) : summary && summary.total_movements !== undefined ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{summary.total_movements || 0}</div>
+                <div className="text-sm text-gray-600">Общее количество движений</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{summary.usage_intensity || 'Неизвестно'}</div>
+                <div className="text-sm text-gray-600">Интенсивность использования</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{summary.data_quality_score ? (summary.data_quality_score * 100).toFixed(1) : '0'}%</div>
+                <div className="text-sm text-gray-600">Качество данных</div>
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-gray-600">
+              <p><strong>Имя пользователя:</strong> {summary.customer_name || 'Неизвестно'}</p>
+              <p><strong>Тип протеза:</strong> {summary.prosthesis_type || 'Неизвестно'}</p>
+              <p><strong>Последняя активность:</strong> {summary.last_activity_date || 'Неизвестно'}</p>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-gray-500">Данные недоступны</div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Детальный отчёт */}
       {report && (
@@ -244,13 +215,6 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
                 Сгенерирован: {new Date(report.generated_at).toLocaleString('ru-RU')}
               </p>
             </div>
-            <button
-              onClick={handleDownloadReport}
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-            >
-              {loading ? '⏳ Скачивание...' : `💾 Скачать ${selectedFormat.toUpperCase()}`}
-            </button>
           </div>
 
           {/* Сводные метрики */}
@@ -259,25 +223,25 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-semibold text-blue-700">
-                  {report.summary_metrics.total_movements.toLocaleString('ru-RU')}
+                  {report.summary_metrics?.total_movements?.toLocaleString('ru-RU') || '0'}
                 </div>
                 <div className="text-xs text-blue-600">Общее количество движений</div>
               </div>
               <div className="p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-semibold text-green-700">
-                  {(report.summary_metrics.avg_movement_accuracy * 100).toFixed(1)}%
+                  {report.summary_metrics?.avg_movement_accuracy ? (report.summary_metrics.avg_movement_accuracy * 100).toFixed(1) : '0'}%
                 </div>
                 <div className="text-xs text-green-600">Средняя точность</div>
               </div>
               <div className="p-3 bg-yellow-50 rounded-lg">
                 <div className="text-lg font-semibold text-yellow-700">
-                  {report.summary_metrics.avg_battery_level.toFixed(1)}%
+                  {report.summary_metrics?.avg_battery_level?.toFixed(1) || '0'}%
                 </div>
                 <div className="text-xs text-yellow-600">Средний уровень батареи</div>
               </div>
               <div className="p-3 bg-purple-50 rounded-lg">
-                <div className={`text-lg font-semibold ${getUsageIntensityColor(report.summary_usage.usage_intensity)}`}>
-                  {report.summary_usage.usage_intensity}
+                <div className={`text-lg font-semibold ${getUsageIntensityColor(report.summary_usage?.usage_intensity || 'Low')}`}>
+                  {report.summary_usage?.usage_intensity || 'Неизвестно'}
                 </div>
                 <div className="text-xs text-purple-600">Интенсивность использования</div>
               </div>
@@ -290,27 +254,27 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">Тип протеза</div>
-                <div className="font-medium">{report.summary_usage.prosthesis_type}</div>
+                <div className="font-medium">{report.summary_usage?.prosthesis_type || 'Неизвестно'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">Основная группа мышц</div>
-                <div className="font-medium">{report.summary_usage.primary_muscle_group}</div>
+                <div className="font-medium">{report.summary_usage?.primary_muscle_group || 'Неизвестно'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">Состояние батареи</div>
-                <div className={`font-medium ${getBatteryHealthColor(report.summary_usage.battery_health)}`}>
-                  {report.summary_usage.battery_health}
+                <div className={`font-medium ${getBatteryHealthColor(report.summary_usage?.battery_health || 'Good')}`}>
+                  {report.summary_usage?.battery_health || 'Неизвестно'}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Аналитические выводы */}
-          {report.insights.length > 0 && (
+          {report.insights && report.insights.length > 0 && (
             <div className="mb-6">
               <h4 className="text-md font-medium text-gray-800 mb-3">💡 Аналитические выводы</h4>
               <div className="space-y-2">
-                {report.insights.map((insight, index) => (
+                {(report.insights || []).map((insight, index) => (
                   <div key={index} className="p-3 bg-blue-50 border-l-4 border-blue-400">
                     <p className="text-sm text-blue-800">{insight}</p>
                   </div>
@@ -320,11 +284,11 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
           )}
 
           {/* Рекомендации */}
-          {report.recommendations.length > 0 && (
+          {report.recommendations && report.recommendations.length > 0 && (
             <div className="mb-6">
               <h4 className="text-md font-medium text-gray-800 mb-3">🔧 Рекомендации</h4>
               <div className="space-y-2">
-                {report.recommendations.map((recommendation, index) => (
+                {(report.recommendations || []).map((recommendation, index) => (
                   <div key={index} className="p-3 bg-green-50 border-l-4 border-green-400">
                     <p className="text-sm text-green-800">{recommendation}</p>
                   </div>
@@ -334,7 +298,7 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
           )}
 
           {/* График активности по дням (упрощённый) */}
-          {report.daily_metrics.length > 0 && (
+          {report.daily_metrics && report.daily_metrics.length > 0 && (
             <div>
               <h4 className="text-md font-medium text-gray-800 mb-3">📈 Активность по дням</h4>
               <div className="overflow-x-auto">
@@ -359,23 +323,23 @@ export const ReportsComponent: React.FC<ReportsComponentProps> = ({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {report.daily_metrics.slice(-10).map((day, index) => (
+                    {(report.daily_metrics || []).slice(-10).map((day, index) => (
                       <tr key={index}>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                           {day.report_date}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                          {day.telemetry.total_movements.toLocaleString('ru-RU')}
+                          {day.telemetry?.total_movements?.toLocaleString('ru-RU') || '0'}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                          {(day.telemetry.avg_movement_accuracy * 100).toFixed(1)}%
+                          {day.telemetry?.avg_movement_accuracy ? (day.telemetry.avg_movement_accuracy * 100).toFixed(1) : '0'}%
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                          {day.telemetry.avg_battery_level.toFixed(1)}%
+                          {day.telemetry?.avg_battery_level?.toFixed(1) || '0'}%
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm">
-                          <span className={getUsageIntensityColor(day.usage.usage_intensity)}>
-                            {day.usage.usage_intensity}
+                          <span className={getUsageIntensityColor(day.usage?.usage_intensity || 'Low')}>
+                            {day.usage?.usage_intensity || 'Неизвестно'}
                           </span>
                         </td>
                       </tr>
