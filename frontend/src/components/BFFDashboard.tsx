@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createBFFAuthService } from '../auth/BFFAuthService';
 import { ReportsComponent } from './ReportsComponent';
 
 interface UserInfo {
@@ -31,16 +30,23 @@ export const BFFDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'reports'>('dashboard');
 
-  const authService = createBFFAuthService();
-
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         setLoading(true);
-        const user = await authService.getCurrentUser();
-        
-        if (user) {
-          setUserInfo(user);
+        const res = await fetch('http://localhost:5001/api/auth/status', { credentials: 'include' });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = await res.json();
+        if (data?.isAuthenticated) {
+          const mapped: UserInfo = {
+            sub: '',
+            crm_user_id: null,
+            username: data.name ?? 'Пользователь',
+            email: '',
+            roles: [],
+            crm_info: null
+          };
+          setUserInfo(mapped);
         } else {
           setError('User not authenticated');
         }
@@ -56,48 +62,10 @@ export const BFFDashboard: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Force redirect anyway
-      window.location.href = '/';
-    }
+    window.location.href = '/';
   };
 
-  const testProtectedEndpoint = async () => {
-    try {
-      const response = await authService.fetchProtected('http://localhost:8001/api/protected');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Protected endpoint response:', data);
-        alert(`Protected endpoint success! Session ID: ${data.session_id}`);
-      } else {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Protected endpoint failed:', error);
-      alert('Protected endpoint failed - check console');
-    }
-  };
-
-  const testReportsEndpoint = async () => {
-    try {
-      const response = await authService.fetchProtected('http://localhost:8001/api/reports');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Reports endpoint response:', data);
-        alert(`Reports loaded! User type: ${data.user_type}, Reports count: ${data.reports.length}`);
-      } else {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Reports endpoint failed:', error);
-      alert('Reports endpoint failed - check console');
-    }
-  };
+  // тестовые кнопки BFF отключены в этой конфигурации
 
   const getUserRoleBadges = (roles: string[]) => {
     const roleColors: { [key: string]: string } = {
@@ -289,21 +257,7 @@ export const BFFDashboard: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex space-x-4">
-                <button
-                  onClick={testProtectedEndpoint}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                >
-                  🧪 Тест защищенного API
-                </button>
-                
-                <button
-                  onClick={testReportsEndpoint}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-                >
-                  📊 Тест API отчетов
-                </button>
-              </div>
+              {/* Тестовые кнопки отключены в этой конфигурации */}
             </div>
 
             {/* Role-based Content */}

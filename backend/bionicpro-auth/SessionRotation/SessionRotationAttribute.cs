@@ -1,0 +1,1 @@
+﻿public class SessionRotationAttribute() : Attribute;

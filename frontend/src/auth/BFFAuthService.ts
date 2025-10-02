@@ -50,7 +50,7 @@ export class BFFAuthService {
    */
   async initiateLogin(): Promise<void> {
     try {
-      window.location.href = `${this.config.bffUrl}/auth/login`;
+      window.location.href = `${this.config.bffUrl}/auth`;
     } catch (error) {
       console.error('Failed to initiate login via BFF:', error);
       throw new Error('Authentication initialization failed');
@@ -146,7 +146,7 @@ export class BFFAuthService {
 
 export const createBFFAuthService = () => {
   const config: AuthConfig = {
-    bffUrl: process.env.REACT_APP_BFF_URL || 'http://localhost:8001',
+    bffUrl: process.env.REACT_APP_BFF_URL || 'http://localhost:5001',
     redirectUri: process.env.REACT_APP_REDIRECT_URI || `${window.location.origin}/auth/callback`,
   };
   return new BFFAuthService(config);

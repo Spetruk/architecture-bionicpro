@@ -1,11 +1,6 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthCallback } from './components/AuthCallback';
-import { BFFDashboard } from './components/BFFDashboard';
-import { BFFAuthGuard } from './components/BFFAuthGuard';
-import { LoginButton } from './components/LoginButton';
+import React, { useState, useEffect } from 'react';
 import ReportPage from './components/ReportPage';
-import ConsentScreen from './components/ConsentScreen';
+import FinalDashboard from './components/FinalDashboard';
 
 function HomePage() {
   return (
@@ -33,9 +28,12 @@ function HomePage() {
           </div>
 
           <div className="max-w-sm mx-auto">
-            <LoginButton className="w-full">
+            <button
+              onClick={() => window.location.href = 'http://localhost:5001/auth'}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            >
               🔐 Войти в BionicPRO
-            </LoginButton>
+            </button>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
@@ -76,7 +74,7 @@ function HomePage() {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-center">
               <div className="text-3xl mb-3">🔐</div>
@@ -109,16 +107,6 @@ function HomePage() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-center">
-              <div className="text-3xl mb-3">🛡️</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">BFF Pattern</h3>
-              <p className="text-gray-600 text-sm">
-                Backend for Frontend обеспечивает безопасный обмен токенами
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-center">
               <div className="text-3xl mb-3">🎯</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Яндекс ID</h3>
               <p className="text-gray-600 text-sm">
@@ -127,41 +115,63 @@ function HomePage() {
             </div>
           </div>
         </div>
-
-        {/* Navigation */}
-        <div className="text-center">
-          <a 
-            href="/reports" 
-            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            📊 Отчеты протезов
-          </a>
-        </div>
       </div>
     </div>
   );
 }
 
-const App: React.FC = () => {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={
-            <BFFAuthGuard fallback={<HomePage />}>
-              <BFFDashboard />
-            </BFFAuthGuard>
-          } />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/reports" element={
-            <BFFAuthGuard fallback={<HomePage />}>
-              <ReportPage />
-            </BFFAuthGuard>
-          } />
-          <Route path="/consent" element={<ConsentScreen />} />
-        </Routes>
+const App: React.FC = () => { 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/auth/status', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const data = await response.json();
+        setIsAuthenticated(data.isAuthenticated);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-700">Проверка авторизации...</p>
+        </div>
       </div>
-    </Router>
+    );
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-xl text-gray-700">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <HomePage />;
+  }
+
+  return (
+    <div className="App">
+      <FinalDashboard />
+    </div>
   );
 };
 

@@ -47,7 +47,8 @@ async def proxy_authorize(request: Request):
         logger.info(f"Modified scope: {original_scope} -> {new_scope}")
     
     # Перенаправляем на настоящий Yandex
-    yandex_url = f"{YANDEX_AUTH_URL}?" + "&".join([f"{k}={v}" for k, v in params.items()])
+    from urllib.parse import urlencode
+    yandex_url = f"{YANDEX_AUTH_URL}?{urlencode(params)}"
     logger.info(f"Redirecting to: {yandex_url}")
     
     return RedirectResponse(url=yandex_url)
@@ -187,3 +188,4 @@ async def proxy_userinfo(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

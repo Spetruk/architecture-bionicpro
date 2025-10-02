@@ -78,7 +78,7 @@ export class ReportsService {
 
   constructor() {
     // Используем BFF для проксирования запросов к Reports Service
-    this.reportsApiUrl = process.env.REACT_APP_BFF_URL || 'http://localhost:8001';
+    this.reportsApiUrl = process.env.REACT_APP_BFF_URL || 'http://localhost:5001';
   }
 
   /**

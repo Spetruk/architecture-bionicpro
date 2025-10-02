@@ -1,52 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { ReportsComponent } from './ReportsComponent';
-import { createBFFAuthService } from '../auth/BFFAuthService';
+import React, { useEffect, useState } from 'react';
 
-interface UserInfo {
-  sub: string;
-  crm_user_id: number | null;
-  username: string;
-  email: string;
-  given_name?: string;
-  family_name?: string;
-  roles: string[];
-  crm_info?: {
-    id: number;
-    name: string;
-    email: string;
-    age: number;
-    gender: string;
-    country: string;
-  } | null;
-}
+type ReportData = any;
 
 const ReportPage: React.FC = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const authService = createBFFAuthService();
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const load = async () => {
       try {
         setLoading(true);
-        const user = await authService.getCurrentUser();
-        
-        if (user) {
-          setUserInfo(user);
-        } else {
-          setError('User not authenticated');
+        console.log('[ReportPage] check auth /api/auth/status ...');
+        // Проверяем аутентификацию
+        const statusRes = await fetch('http://localhost:5001/api/auth/status', {
+          credentials: 'include'
+        });
+        console.log('[ReportPage] /api/auth/status code =', statusRes.status);
+        const status = await statusRes.json().catch(() => ({} as any));
+        console.log('[ReportPage] /api/auth/status payload =', status);
+        if (!status?.isAuthenticated) {
+          setError('Не авторизован');
+          return;
         }
-      } catch (err) {
-        console.error('Failed to fetch user info:', err);
-        setError('Failed to load user information');
+
+        // Забираем отчет через BFF (/reports проксирует на reports-api)
+        console.log('[ReportPage] fetch /reports ...');
+        const res = await fetch('http://localhost:5001/reports', {
+          credentials: 'include'
+        });
+        console.log('[ReportPage] /reports code =', res.status);
+        if (res.status === 401) {
+          setError('Не авторизован');
+          return;
+        }
+        if (!res.ok) {
+          // Если отчёт не найден — попробуем сгенерировать
+          if (res.status === 404) {
+            console.log('[ReportPage] /reports 404 → POST /generate-reports');
+            const genRes = await fetch('http://localhost:5001/generate-reports', {
+              method: 'GET',
+              credentials: 'include'
+            });
+            console.log('[ReportPage] /generate-reports code =', genRes.status);
+            if (genRes.ok) {
+              const gen = await genRes.json().catch(() => ({} as any));
+              console.log('[ReportPage] /generate-reports payload =', gen);
+              if (typeof gen?.url === 'string') {
+                setGeneratedUrl(gen.url);
+              }
+              // Попробуем ещё раз получить отчёт
+              const retry = await fetch('http://localhost:5001/reports', { credentials: 'include' });
+              console.log('[ReportPage] retry /reports code =', retry.status);
+              if (retry.ok) {
+                const retryData = await retry.json().catch(() => null);
+                setReport(retryData);
+              } else {
+                // Не считаем это ошибкой аутентификации — просто нет данных
+                setError('Отчет пока не готов');
+              }
+              return;
+            }
+          }
+          setError(`Ошибка загрузки отчета: ${res.status}`);
+          return;
+        }
+
+        // Ожидаем JSON
+        const data = await res.json().catch(() => null);
+        console.log('[ReportPage] /reports json =', data);
+        setReport(data);
+      } catch (e) {
+        console.error('[ReportPage] error =', e);
+        setError('Ошибка при получении отчета');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchUserInfo();
+    load();
   }, []);
 
   if (loading) {
@@ -60,73 +92,55 @@ const ReportPage: React.FC = () => {
     );
   }
 
-  if (error || !userInfo) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Ошибка аутентификации</p>
-          <a 
-            href="/" 
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            ← Вернуться на главную
-          </a>
+          <p className="text-red-600 mb-1">{error === 'Не авторизован' ? 'Ошибка аутентификации' : 'Отчёт недоступен'}</p>
+          {generatedUrl && (
+            <p className="text-gray-600 mb-3">
+              Ссылка на готовый отчёт: <a className="text-blue-600 underline" href={generatedUrl}>открыть</a>
+            </p>
+          )}
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                console.log('[ReportPage] click login -> /login');
+                window.location.href = 'http://localhost:5001/login';
+              }}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              🔐 Войти
+            </button>
+            <a
+              href="/"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              ← Вернуться на главную
+            </a>
+          </div>
         </div>
       </div>
     );
   }
-
-  // Проверяем, найден ли пользователь в CRM
-  if (!userInfo.crm_user_id) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">
-            Пользователь не найден в системе CRM
-          </p>
-          <p className="text-gray-600 mb-4">
-            Email: {userInfo.email}
-          </p>
-          <a 
-            href="/" 
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            ← Вернуться на главную
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Используем реальный CRM user_id
-  const userId = userInfo.crm_user_id;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            📊 Отчеты по протезам
-          </h1>
-          <p className="text-gray-600">
-            Просмотр аналитических данных и отчетов о работе бионических протезов
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Пользователь: {userInfo.crm_info?.name || userInfo.username} ({userInfo.email})
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            CRM ID: {userInfo.crm_user_id} | Keycloak ID: {userInfo.sub}
-          </p>
-        </div>
-        
-        <ReportsComponent userId={userId} />
-        
-        <div className="mt-8 text-center">
-          <a 
-            href="/" 
+      <div className="max-w-5xl mx-auto py-6 px-4">
+        <h1 className="text-2xl font-bold mb-4">📊 Ваш отчет</h1>
+        {report ? (
+          <pre className="bg-white p-4 rounded border overflow-auto text-sm">
+{JSON.stringify(report, null, 2)}
+          </pre>
+        ) : (
+          <p className="text-gray-600">Отчет сформирован и отдан как файл.</p>
+        )}
+        <div className="mt-4">
+          <a
+            href="http://localhost:5001/reports"
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
-            ← Вернуться на главную
+            ⬇ Скачать отчет JSON
           </a>
         </div>
       </div>
