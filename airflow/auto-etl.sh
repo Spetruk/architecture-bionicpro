@@ -12,11 +12,22 @@ until curl -s http://airflow-webserver:8080/health > /dev/null; do
     sleep 10
 done
 
-# Проверка готовности ClickHouse
-until clickhouse-client --host olap_db --query "SELECT 1" > /dev/null 2>&1; do
+# Проверка готовности ClickHouse через HTTP
+until curl -s "http://olap_db:8123/?query=SELECT%201" > /dev/null; do
     echo "Ожидание готовности ClickHouse..."
     sleep 10
 done
+
+echo "✅ Все сервисы готовы!"
+
+# Снятие DAG с паузы
+echo "Снятие DAG с паузы..."
+curl -X PATCH "http://airflow-webserver:8080/api/v1/dags/bionicpro_etl_reports" \
+  -H "Content-Type: application/json" \
+  -u "admin:admin123" \
+  -d '{"is_paused": false}'
+
+echo ""
 
 # Запуск ETL DAG
 echo "Запуск ETL DAG..."
@@ -28,5 +39,6 @@ curl -X POST "http://airflow-webserver:8080/api/v1/dags/bionicpro_etl_reports/da
     "conf": {}
   }'
 
+echo ""
 echo "✅ ETL процесс запущен автоматически!"
 

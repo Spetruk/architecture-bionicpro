@@ -366,7 +366,8 @@ services:
     networks:
       - bionicpro-network
     depends_on:
-      - olap_db
+      olap_db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8002/health"]
       interval: 30s
