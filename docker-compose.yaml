@@ -205,7 +205,7 @@ services:
       AIRFLOW__WEBSERVER__SECRET_KEY: mysecretkey
       AIRFLOW__LOGGING__LOGGING_LEVEL: INFO
       AIRFLOW_CONN_CRM_DB_CONN: postgresql://crm_user:crm_password@crm_db:5432/crm_db
-      AIRFLOW_CONN_clickhouse_conn: mysql://default:@olap_db:9000/emg_sensor_data
+      AIRFLOW_CONN_CLICKHOUSE_CONN: clickhouse://default:@olap_db:9000/default
       AIRFLOW__CORE__TEST_CONNECTION: Enabled
     volumes:
       - ./airflow/dags:/opt/airflow/dags
@@ -229,6 +229,10 @@ services:
       airflow db migrate;
       echo 'Создание пользователя admin...';
       airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true;
+      echo 'Распаузим основной DAG...';
+      airflow dags unpause crm_to_clickhouse_mart_dag || true;
+      echo 'Триггерим основной DAG для первичного наполнения витрины...';
+      airflow dags trigger crm_to_clickhouse_mart_dag || true;
       echo 'Инициализация Airflow завершена.';
       "
   airflow-db:
@@ -270,6 +274,9 @@ services:
       interval: 30s
       timeout: 30s
       retries: 3
+
+  # Авто-распаузить и триггернуть DAG-и ПОСЛЕ того как webserver+scheduler поднялись
+  # airflow-bootstrap больше не нужен — удалён, чтобы не мешать чистому старту
 
   kafka:
     image: confluentinc/cp-kafka:latest

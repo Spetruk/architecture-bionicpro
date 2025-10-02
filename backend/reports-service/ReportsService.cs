@@ -46,8 +46,8 @@ public class ReportsService
 
     public async Task<IResult> GetReportFile(int userId)
     {
-        // Используем материализованное представление как основной источник
-        var report = await GetReportFromMvAsync(userId);
+        // Основной источник — витрина, которую заполняет DAG
+        var report = await GetReportFromAsync(userId);
         var json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
         var bytes = Encoding.UTF8.GetBytes(json);
 
@@ -60,7 +60,7 @@ public class ReportsService
 
     public async Task<bool> GenerateAndSaveReportAsync(int userId)
     {
-        var result = await GetReportFromMvAsync(userId);
+        var result = await GetReportFromAsync(userId);
         var hasData = result.Any();
         if (hasData)
         {
