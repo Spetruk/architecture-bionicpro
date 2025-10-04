@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bionicpro-auth", "backend\bionicpro-auth\bionicpro-auth.csproj", "{5206191C-87F4-4E1F-9263-782F7FF9908C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "reports-service", "backend\reports-service\reports-service.csproj", "{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|x64.Build.0 = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Debug|x86.Build.0 = Debug|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|x64.ActiveCfg = Release|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|x64.Build.0 = Release|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|x86.ActiveCfg = Release|Any CPU
+		{5206191C-87F4-4E1F-9263-782F7FF9908C}.Release|x86.Build.0 = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|x64.Build.0 = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Debug|x86.Build.0 = Debug|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|x64.ActiveCfg = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|x64.Build.0 = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|x86.ActiveCfg = Release|Any CPU
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5206191C-87F4-4E1F-9263-782F7FF9908C} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
+		{F28554F2-BF75-4AB0-AC87-FC9C5B6DBDED} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {04B4AAA9-8D67-4B9C-94C7-61067C21293F}
+	EndGlobalSection
+EndGlobal
