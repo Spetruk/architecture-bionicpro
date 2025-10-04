@@ -363,6 +363,61 @@
     }
   },
   "groups" : [ ],
+  "users" : [
+    {
+      "username" : "testuser",
+      "enabled" : true,
+      "emailVerified" : false,
+      "firstName" : "Test",
+      "lastName" : "User",
+      "email" : "testuser@example.com",
+      "credentials" : [ { "type" : "password", "value" : "password123", "temporary" : false } ],
+      "realmRoles" : [ "user" ]
+    },
+    {
+      "username" : "buyer",
+      "enabled" : true,
+      "emailVerified" : false,
+      "firstName" : "Buyer",
+      "lastName" : "User",
+      "email" : "buyer@example.com",
+      "credentials" : [ { "type" : "password", "value" : "buyer123", "temporary" : false } ],
+      "realmRoles" : [ "user" ]
+    },
+    {
+      "username": "alexis.moore",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Alexis",
+      "lastName": "Moore",
+      "email": "alexis.moore@example.com",
+      "attributes": { "user_id": [ "1" ] },
+      "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "realmRoles": [ "user" ]
+    },
+    {
+      "username": "paige.gonzales",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Paige",
+      "lastName": "Gonzales",
+      "email": "paige.gonzales@example.com",
+      "attributes": { "user_id": [ "2" ] },
+      "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "realmRoles": [ "user" ]
+    },
+    {
+      "username": "theresa.kelly",
+      "enabled": true,
+      "emailVerified": false,
+      "firstName": "Theresa",
+      "lastName": "Kelly",
+      "email": "theresa.kelly@example.com",
+      "attributes": { "user_id": [ "3" ] },
+      "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "realmRoles": [ "user" ]
+    }
+  ],
   "defaultRole" : {
     "id" : "429fb1a0-3a8c-4541-abc8-24fefa023a46",
     "name" : "default-roles-reports-realm",
@@ -520,7 +575,15 @@
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "Y2MCU5BjY8tzCajrWtFLKTINH7kffiHG",
-    "redirectUris" : [ "http://localhost:5001/signin-oidc", "https://localhost:53287/signin-oidc", "https://localhost:5002/signin-oidc" ],
+    "redirectUris" : [
+      "http://localhost:5001/signin-oidc",
+      "https://localhost:53287/signin-oidc",
+      "https://localhost:5002/signin-oidc",
+      "http://localhost:3000/",
+      "http://localhost:3000/*",
+      "http://localhost:5001/",
+      "http://localhost:5001/*"
+    ],
     "webOrigins" : [ "/*" ],
     "notBefore" : 0,
     "bearerOnly" : false,
@@ -536,7 +599,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1759432094",
       "backchannel.logout.session.required" : "true",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "http://localhost:5001/after-logout",
       "display.on.consent.screen" : "false",
       "oauth2.device.authorization.grant.enabled" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1276,8 +1339,8 @@
     "addReadTokenRoleOnCreate" : false,
     "authenticateByDefault" : false,
     "linkOnly" : false,
-    "firstBrokerLoginFlowAlias" : "simple yandex login",
-    "config" : {
+      "firstBrokerLoginFlowAlias" : "first broker login",
+      "config" : {
       "hideOnLoginPage" : "false",
       "userInfoUrl" : "http://keycloak-yandex-proxy:8000/info",
       "validateSignature" : "false",
@@ -1294,10 +1357,12 @@
       "authorizationUrl" : "http://localhost:8004/authorize",
       "clientAuthMethod" : "client_secret_post",
       "disableUserInfo" : "false",
-      "logoutUrl" : "https://oauth.yandex.ru/logout",
+        "logoutUrl" : "",
       "syncMode" : "FORCE",
       "clientSecret" : "**********",
-      "passMaxAge" : "false",
+        "passMaxAge" : "true",
+        "maxAge" : "0",
+        "prompt" : "login",
       "allowedClockSkew" : "0",
       "defaultScope" : "login:info login:email"
     }
@@ -1518,9 +1583,9 @@
         "cachePolicy" : [ "DEFAULT" ],
         "useKerberosForPasswordAuthentication" : [ "false" ],
         "importEnabled" : [ "true" ],
-        "enabled" : [ "false" ],
+        "enabled" : [ "true" ],
         "bindDn" : [ "cn=admin,dc=example,dc=com" ],
-        "bindCredential" : [ "**********" ],
+        "bindCredential" : [ "admin" ],
         "changedSyncPeriod" : [ "-1" ],
         "usernameLDAPAttribute" : [ "uid" ],
         "vendor" : [ "other" ],

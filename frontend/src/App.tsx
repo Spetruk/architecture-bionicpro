@@ -28,12 +28,12 @@ function HomePage() {
           </div>
 
           <div className="max-w-sm mx-auto">
-            <button
-              onClick={() => window.location.href = 'http://localhost:5001/auth'}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            <a
+              href="http://localhost:5001/login"
+              className="block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
             >
               🔐 Войти в BionicPRO
-            </button>
+            </a>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">

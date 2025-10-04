@@ -5,14 +5,16 @@ import re
 import logging
 import json
 import base64
+import hashlib
 from urllib.parse import unquote_plus
 
 app = FastAPI(title="Keycloak Yandex Proxy")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Глобальная переменная для сохранения nonce
-saved_nonce = None
+# Сопоставление PKCE code_challenge -> nonce, чтобы вернуть корректный nonce в id_token
+challenge_to_nonce: dict[str, str] = {}
+
 
 # Yandex settings
 YANDEX_AUTH_URL = "https://oauth.yandex.ru/authorize"
@@ -33,9 +35,6 @@ async def proxy_authorize(request: Request):
     # Логируем оригинальный запрос
     logger.info(f"Original authorize request: {params}")
     
-    # Сохраняем nonce для последующего использования в JWT
-    global saved_nonce
-    saved_nonce = params.get('nonce')
     
     # Убираем openid из scope если он есть
     if 'scope' in params:
@@ -45,6 +44,16 @@ async def proxy_authorize(request: Request):
         new_scope = re.sub(r'\s+', ' ', new_scope)  # Убираем лишние пробелы
         params['scope'] = new_scope
         logger.info(f"Modified scope: {original_scope} -> {new_scope}")
+    
+    # Привязываем nonce к code_challenge (PKCE) для восстановления на этапе /token
+    try:
+        code_challenge = params.get('code_challenge')
+        nonce = params.get('nonce')
+        if code_challenge and nonce:
+            challenge_to_nonce[code_challenge] = nonce
+            logger.info(f"Saved nonce for challenge: {code_challenge[:8]}...")
+    except Exception as e:
+        logger.warning(f"Failed to save nonce mapping: {e}")
     
     # Перенаправляем на настоящий Yandex
     from urllib.parse import urlencode
@@ -108,10 +117,20 @@ async def proxy_token(request: Request):
                     "iat": 1726517000   # Текущее время
                 }
                 
-                # Добавляем nonce если он был в запросе
-                if saved_nonce:
-                    payload['nonce'] = saved_nonce
-                    logger.info(f"Added nonce to JWT: {saved_nonce}")
+                # Восстанавливаем nonce с помощью PKCE: code_verifier -> code_challenge -> nonce
+                try:
+                    code_verifier = form_data.get('code_verifier')
+                    if code_verifier:
+                        digest = hashlib.sha256(code_verifier.encode()).digest()
+                        challenge = base64.urlsafe_b64encode(digest).decode().rstrip('=')
+                        stored_nonce = challenge_to_nonce.get(challenge)
+                        if stored_nonce:
+                            payload['nonce'] = stored_nonce
+                            logger.info("Added nonce to fake id_token via PKCE mapping")
+                        else:
+                            logger.warning("No stored nonce for computed challenge; proceeding without nonce")
+                except Exception as e:
+                    logger.warning(f"Failed to attach nonce: {e}")
                 
                 # Кодируем в base64
                 header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip('=')

@@ -229,10 +229,6 @@ services:
       airflow db migrate;
       echo 'Создание пользователя admin...';
       airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true;
-      echo 'Распаузим основной DAG...';
-      airflow dags unpause crm_to_clickhouse_mart_dag || true;
-      echo 'Триггерим основной DAG для первичного наполнения витрины...';
-      airflow dags trigger crm_to_clickhouse_mart_dag || true;
       echo 'Инициализация Airflow завершена.';
       "
   airflow-db:
@@ -270,13 +266,27 @@ services:
         condition: service_healthy
     command: scheduler
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
+      test: [ "CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname $(hostname)" ]
       interval: 30s
       timeout: 30s
-      retries: 3
+      retries: 5
 
-  # Авто-распаузить и триггернуть DAG-и ПОСЛЕ того как webserver+scheduler поднялись
-  # airflow-bootstrap больше не нужен — удалён, чтобы не мешать чистому старту
+  # Авто-распаузить и триггернуть DAG ПОСЛЕ того как webserver+scheduler поднялись
+  airflow-bootstrap:
+    <<: *airflow-common
+    depends_on:
+      airflow-webserver:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_healthy
+    command: >
+      bash -c "
+      set -euo pipefail;
+      echo 'Bootstrap: unpause and trigger crm_to_clickhouse_mart_dag...';
+      airflow dags unpause crm_to_clickhouse_mart_dag || true;
+      airflow dags trigger crm_to_clickhouse_mart_dag || true;
+      echo 'Bootstrap done.';
+      "
 
   kafka:
     image: confluentinc/cp-kafka:latest

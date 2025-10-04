@@ -6,7 +6,7 @@ const ReportPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
-  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  // Убрали генерацию; отчёт берём только из витрины
 
   useEffect(() => {
     const load = async () => {
@@ -36,32 +36,9 @@ const ReportPage: React.FC = () => {
           return;
         }
         if (!res.ok) {
-          // Если отчёт не найден — попробуем сгенерировать
           if (res.status === 404) {
-            console.log('[ReportPage] /reports 404 → POST /generate-reports');
-            const genRes = await fetch('http://localhost:5001/generate-reports', {
-              method: 'GET',
-              credentials: 'include'
-            });
-            console.log('[ReportPage] /generate-reports code =', genRes.status);
-            if (genRes.ok) {
-              const gen = await genRes.json().catch(() => ({} as any));
-              console.log('[ReportPage] /generate-reports payload =', gen);
-              if (typeof gen?.url === 'string') {
-                setGeneratedUrl(gen.url);
-              }
-              // Попробуем ещё раз получить отчёт
-              const retry = await fetch('http://localhost:5001/reports', { credentials: 'include' });
-              console.log('[ReportPage] retry /reports code =', retry.status);
-              if (retry.ok) {
-                const retryData = await retry.json().catch(() => null);
-                setReport(retryData);
-              } else {
-                // Не считаем это ошибкой аутентификации — просто нет данных
-                setError('Отчет пока не готов');
-              }
-              return;
-            }
+            setError('Отчет пока не готов');
+            return;
           }
           setError(`Ошибка загрузки отчета: ${res.status}`);
           return;
@@ -97,11 +74,7 @@ const ReportPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-1">{error === 'Не авторизован' ? 'Ошибка аутентификации' : 'Отчёт недоступен'}</p>
-          {generatedUrl && (
-            <p className="text-gray-600 mb-3">
-              Ссылка на готовый отчёт: <a className="text-blue-600 underline" href={generatedUrl}>открыть</a>
-            </p>
-          )}
+          {/* Ссылка на генерацию удалена */}
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => {

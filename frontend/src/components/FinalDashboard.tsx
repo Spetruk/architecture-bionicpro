@@ -8,7 +8,7 @@ export const FinalDashboard: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [hasReport, setHasReport] = useState<boolean>(false);
   const [userId, setUserId] = useState<number | null>(null);
-  const [genUrl, setGenUrl] = useState<string | null>(null);
+  // Убрали генерацию отчёта по кнопке — остаётся только показ из витрины
   const [summary, setSummary] = useState<Record<string, any> | null>(null);
   const [fullReport, setFullReport] = useState<Record<string, any> | null>(null);
   const [showFull, setShowFull] = useState<boolean>(false);
@@ -63,49 +63,13 @@ export const FinalDashboard: React.FC = () => {
     load();
   }, []);
 
-  // Если получили CDN/прямую ссылку — автоматически открываем в новой вкладке
-  useEffect(() => {
-    if (genUrl) {
-      try {
-        window.open(genUrl, '_blank');
-      } catch {}
-    }
-  }, [genUrl]);
+  // Кнопка генерации и открытие CDN ссылки удалены
 
   const handleLogin = () => {
     window.location.href = `${BFF_BASE}/login`;
   };
 
-  const handleGenerate = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`${BFF_BASE}/generate-reports`, {
-        method: 'GET',
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => ({} as any));
-        if (typeof data?.url === 'string') setGenUrl(data.url);
-        // После генерации пробуем ещё раз проверить наличие
-        const check = await fetch(`${BFF_BASE}/reports`, { credentials: 'include' });
-        setHasReport(check.status === 200);
-        if (check.status === 200) {
-          const j = await check.json().catch(() => null);
-          setFullReport(j);
-          setShowFull(true);
-        }
-      } else if (res.status === 404) {
-        setHasReport(false);
-      } else {
-        setError(`Ошибка генерации: ${res.status}`);
-      }
-    } catch (e) {
-      setError('Ошибка генерации отчёта');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Генерация отчёта по кнопке удалена
 
   if (loading) {
     return (
@@ -123,7 +87,7 @@ export const FinalDashboard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">Не авторизован</p>
-          <button onClick={handleLogin} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔐 Войти</button>
+          <a href={`${BFF_BASE}/login`} className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔐 Войти</a>
         </div>
       </div>
     );
@@ -134,7 +98,10 @@ export const FinalDashboard: React.FC = () => {
       <div className="max-w-3xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">👤 Профиль</h1>
-          <p className="text-gray-700">Пользователь: <span className="font-semibold">{userName}</span></p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-700">Пользователь: <span className="font-semibold">{userName}</span></p>
+            <a href={`${BFF_BASE}/auth/logout`} className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm">⎋ Выйти</a>
+          </div>
           <p className="text-gray-500 text-sm">CRM ID: {userId ?? '—'}</p>
         </div>
 
@@ -163,7 +130,6 @@ export const FinalDashboard: React.FC = () => {
               )}
 
               <div className="flex items-center gap-2">
-                <button onClick={handleGenerate} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">🔄 Сгенерировать подробный</button>
                 <button onClick={() => setShowFull(v => !v)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                   {showFull ? 'Скрыть подробный' : 'Показать подробный'}
                 </button>
@@ -171,11 +137,7 @@ export const FinalDashboard: React.FC = () => {
             </div>
           ) : userId ? (
             <div className="space-y-2">
-              <p className="text-gray-600">Отчёт ещё не сгенерирован.</p>
-              <button onClick={handleGenerate} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">⚙ Сгенерировать отчёт</button>
-              {genUrl && (
-                <p className="text-gray-600">Ссылка: <a className="text-blue-600 underline" href={genUrl}>открыть</a></p>
-              )}
+              <p className="text-gray-600">Подробный отчёт пока недоступен. Он берётся из витрины.</p>
             </div>
           ) : (
             <p className="text-gray-600">Для этого пользователя отчёты недоступны (нет CRM ID).</p>

@@ -159,6 +159,39 @@ app.MapGet("/auth", (HttpContext context) =>
     return Results.Redirect("http://localhost:3000");
 }).RequireAuthorization();
 
+// Public endpoint to land after Keycloak logout
+app.MapGet("/after-logout", (HttpContext context) => Results.Redirect("http://localhost:3000"));
+
+app.MapMethods("/auth/logout", new[] { "GET", "POST" }, async (HttpContext context) =>
+{
+    Console.WriteLine("[/auth/logout] clearing session and redirecting to frontend");
+    // Считываем id_token для RP-initiated logout
+    string? idToken = null;
+    try { idToken = await context.GetTokenAsync("id_token"); } catch { }
+
+    // Чистим локальные сессии/куки
+    try { await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); } catch { }
+    try { await context.SignOutAsync("Keycloak"); } catch { }
+    context.Session.Clear();
+    context.Response.Cookies.Delete(".auth.session");
+
+    // Формируем browser-facing logout URL Keycloak
+    var realmUrlInternal = app.Configuration["KEYCLOAK_REALM_URL"] ?? "http://keycloak:8080/realms/reports-realm";
+    var realmUrlBrowser = realmUrlInternal.Replace("http://keycloak:8080", "http://localhost:8080");
+    // Use BFF public endpoint as post_logout_redirect_uri to satisfy Keycloak validation
+    var frontendUrl = "http://localhost:5001/after-logout";
+    var logoutBase = $"{realmUrlBrowser}/protocol/openid-connect/logout";
+    var postLogout = System.Net.WebUtility.UrlEncode(frontendUrl);
+    var clientId = app.Configuration["KEYCLOAK_CLIENTID"] ?? "backend-auth";
+    var logoutUrl = $"{logoutBase}?client_id={clientId}&post_logout_redirect_uri={postLogout}";
+    if (!string.IsNullOrWhiteSpace(idToken))
+    {
+        var hint = System.Net.WebUtility.UrlEncode(idToken);
+        logoutUrl += $"&id_token_hint={hint}";
+    }
+    return Results.Redirect(logoutUrl);
+});
+
 app.MapGet("/reports", async (HttpContext context, [FromServices] ReportsApiClient reportsClient) => await reportsClient.GetReportsAsync(context))
    .RequireAuthorization()
    .RequreSessionRotation();
