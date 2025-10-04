@@ -372,6 +372,7 @@
       "lastName" : "User",
       "email" : "testuser@example.com",
       "credentials" : [ { "type" : "password", "value" : "password123", "temporary" : false } ],
+      "requiredActions" : [ "CONFIGURE_TOTP" ],
       "realmRoles" : [ "user" ]
     },
     {
@@ -382,6 +383,7 @@
       "lastName" : "User",
       "email" : "buyer@example.com",
       "credentials" : [ { "type" : "password", "value" : "buyer123", "temporary" : false } ],
+      "requiredActions" : [ "CONFIGURE_TOTP" ],
       "realmRoles" : [ "user" ]
     },
     {
@@ -393,6 +395,7 @@
       "email": "alexis.moore@example.com",
       "attributes": { "user_id": [ "1" ] },
       "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "requiredActions" : [ "CONFIGURE_TOTP" ],
       "realmRoles": [ "user" ]
     },
     {
@@ -404,6 +407,7 @@
       "email": "paige.gonzales@example.com",
       "attributes": { "user_id": [ "2" ] },
       "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "requiredActions" : [ "CONFIGURE_TOTP" ],
       "realmRoles": [ "user" ]
     },
     {
@@ -415,6 +419,7 @@
       "email": "theresa.kelly@example.com",
       "attributes": { "user_id": [ "3" ] },
       "credentials": [ { "type": "password", "value": "bionicpro123", "temporary": false } ],
+      "requiredActions" : [ "CONFIGURE_TOTP" ],
       "realmRoles": [ "user" ]
     }
   ],
@@ -2238,7 +2243,7 @@
     "name" : "Configure OTP",
     "providerId" : "CONFIGURE_TOTP",
     "enabled" : true,
-    "defaultAction" : false,
+    "defaultAction" : true,
     "priority" : 10,
     "config" : { }
   }, {
